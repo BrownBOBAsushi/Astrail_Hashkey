@@ -23,9 +23,11 @@ import {
   getStageSteps,
 } from "@/lib/trip/agent-copy";
 import type {
+  AP2MandateResponse,
   BudgetLevel,
   BackendExtractedPlace,
   ExtractResponse,
+  HotelBookingResponse,
   HotelBaseResult,
   HotelBaseStreamEvent,
   HotelPreferencePayload,
@@ -44,6 +46,10 @@ import {
   streamHotelBase,
   streamItinerary,
 } from "@/lib/trip/generate-trip";
+import {
+  requestHotelBookingMandate,
+  submitHotelBooking,
+} from "@/lib/trip/hotel-booking";
 import { readPublicMapboxToken } from "@/lib/trip/env";
 import type { DayFilter, TripDay, TripExperience, TripHotelBase, TripPlace } from "@/lib/trip/types";
 
@@ -72,12 +78,30 @@ type SteeringState = {
   steeringNotes: string[];
 };
 
+type BookingFlowStatus =
+  | "idle"
+  | "mandate_signing"
+  | "mandate_ready"
+  | "booking_submitting"
+  | "confirmed"
+  | "rejected"
+  | "failed";
+
+type BookingFlowState = {
+  status: BookingFlowStatus;
+  mandateResponse: AP2MandateResponse | null;
+  bookingResponse: HotelBookingResponse | null;
+  errorMessage: string | null;
+};
+
 const PRIORITY_THEMES = [
   { id: "food", label: "Food" },
   { id: "transit", label: "Transit" },
   { id: "value", label: "Value" },
   { id: "weather", label: "Weather" },
 ] as const;
+
+const DEMO_AP2_TRIP_ID = "tc-demo-osaka-001";
 
 const EMPTY_GLOBE_TRIP: TripExperience = {
   id: "empty-globe",
@@ -91,6 +115,13 @@ const EMPTY_GLOBE_TRIP: TripExperience = {
   },
   days: [],
   places: [],
+};
+
+const INITIAL_BOOKING_FLOW_STATE: BookingFlowState = {
+  status: "idle",
+  mandateResponse: null,
+  bookingResponse: null,
+  errorMessage: null,
 };
 
 const DEFAULT_REEL_INPUT = "";
@@ -132,7 +163,7 @@ export function TripGenerationShell() {
   const [priorityThemes, setPriorityThemes] = useState<string[]>([]);
   const [regenerateDay, setRegenerateDay] = useState<number | null>(null);
   const [steeringNotes, setSteeringNotes] = useState<string[]>([]);
-  const [bookingHandoffVisible, setBookingHandoffVisible] = useState(false);
+  const [bookingFlow, setBookingFlow] = useState<BookingFlowState>(INITIAL_BOOKING_FLOW_STATE);
 
   const activeTrip = provisionalTrip ?? EMPTY_GLOBE_TRIP;
   const selectedPlace = useMemo(
@@ -373,6 +404,137 @@ export function TripGenerationShell() {
     setSteeringNotes((current) => [...current, trimmed].slice(-5));
   }, []);
 
+  const handleRequestBookingMandate = useCallback(async () => {
+    setRightPanelTab("agent-run");
+    setBookingFlow({
+      status: "mandate_signing",
+      mandateResponse: null,
+      bookingResponse: null,
+      errorMessage: null,
+    });
+
+    try {
+      const mandateResponse = await requestHotelBookingMandate({
+        tripId: DEMO_AP2_TRIP_ID,
+      });
+
+      if (mandateResponse.status !== "signed" || !mandateResponse.ap2?.signed_mandate) {
+        const message = getBackendErrorMessage(
+          mandateResponse.error,
+          "AP2 mandate was rejected by the backend.",
+        );
+        setBookingFlow({
+          status: "rejected",
+          mandateResponse,
+          bookingResponse: null,
+          errorMessage: message,
+        });
+        pushLog("AP2 mandate rejected", message, "error");
+        return;
+      }
+
+      setBookingFlow({
+        status: "mandate_ready",
+        mandateResponse,
+        bookingResponse: null,
+        errorMessage: null,
+      });
+      pushLog(
+        "AP2 mandate signed",
+        buildMandateLogDetail(mandateResponse),
+        "success",
+      );
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setBookingFlow({
+        status: "failed",
+        mandateResponse: null,
+        bookingResponse: null,
+        errorMessage: message,
+      });
+      pushLog("AP2 mandate failed", message, "error");
+    }
+  }, [pushLog]);
+
+  const handleConfirmHotelBooking = useCallback(async () => {
+    const mandateResponse = bookingFlow.mandateResponse;
+    const signedMandate = mandateResponse?.ap2?.signed_mandate;
+
+    if (!signedMandate) {
+      const message = "Create a signed AP2 mandate before submitting the hotel booking.";
+      setBookingFlow({
+        status: "failed",
+        mandateResponse,
+        bookingResponse: null,
+        errorMessage: message,
+      });
+      pushLog("Hotel booking blocked", message, "error");
+      return;
+    }
+
+    setBookingFlow({
+      status: "booking_submitting",
+      mandateResponse,
+      bookingResponse: null,
+      errorMessage: null,
+    });
+
+    try {
+      const bookingResponse = await submitHotelBooking({
+        tripId: DEMO_AP2_TRIP_ID,
+        signedMandate,
+      });
+
+      if (bookingResponse.status === "rejected" || bookingResponse.error) {
+        const message = getBackendErrorMessage(
+          bookingResponse.error,
+          "Hotel booking was rejected by the backend.",
+        );
+        setBookingFlow({
+          status: "rejected",
+          mandateResponse,
+          bookingResponse,
+          errorMessage: message,
+        });
+        pushLog("Hotel booking rejected", message, "error");
+        return;
+      }
+
+      if (!bookingResponse.receipt) {
+        const message = "Hotel booking response did not include a receipt.";
+        setBookingFlow({
+          status: "failed",
+          mandateResponse,
+          bookingResponse,
+          errorMessage: message,
+        });
+        pushLog("Hotel booking failed", message, "error");
+        return;
+      }
+
+      setBookingFlow({
+        status: "confirmed",
+        mandateResponse,
+        bookingResponse,
+        errorMessage: null,
+      });
+      pushLog(
+        "Hotel booking confirmed",
+        buildBookingLogDetail(bookingResponse),
+        "success",
+      );
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setBookingFlow({
+        status: "failed",
+        mandateResponse,
+        bookingResponse: null,
+        errorMessage: message,
+      });
+      pushLog("Hotel booking failed", message, "error");
+    }
+  }, [bookingFlow.mandateResponse, pushLog]);
+
   const handleToggleHotelPreferenceChip = useCallback((chip: string) => {
     setHotelPreferenceChips((current) => {
       if (chip === "optimize_for_me") {
@@ -447,7 +609,7 @@ export function TripGenerationShell() {
     setHotelBaseProgressItems([]);
     setLogs([]);
     setCacheNotice(null);
-    setBookingHandoffVisible(false);
+    setBookingFlow(INITIAL_BOOKING_FLOW_STATE);
 
     try {
       setStatus("planning_itinerary");
@@ -681,7 +843,7 @@ export function TripGenerationShell() {
       setHotelBaseProgressItems([]);
       setLogs([]);
       setCacheNotice(null);
-      setBookingHandoffVisible(false);
+      setBookingFlow(INITIAL_BOOKING_FLOW_STATE);
 
       try {
         setStatus("extracting_places");
@@ -784,13 +946,14 @@ export function TripGenerationShell() {
               regenerateDay,
               steeringNotes,
             }}
-            bookingHandoffVisible={bookingHandoffVisible}
+            bookingState={bookingFlow}
             onToggleHotelBaseLock={handleToggleHotelBaseLock}
             onTogglePlaceLock={handleToggleSelectedPlaceLock}
             onTogglePriorityTheme={handleTogglePriorityTheme}
             onRequestRegenerateDay={handleRequestRegenerateDay}
             onAddSteeringNote={handleAddSteeringNote}
-            onApprovePlan={() => setBookingHandoffVisible(true)}
+            onRequestBookingMandate={handleRequestBookingMandate}
+            onConfirmHotelBooking={handleConfirmHotelBooking}
           />
         )}
       />
@@ -873,14 +1036,13 @@ export function TripGenerationShell() {
               lockedPlaceIds,
               priorityThemes,
               regenerateDay,
-            steeringNotes,
-          }}
-          bookingHandoffVisible={false}
-          onToggleHotelBaseLock={handleToggleHotelBaseLock}
-          onTogglePlaceLock={handleToggleSelectedPlaceLock}
-          onTogglePriorityTheme={handleTogglePriorityTheme}
-          onRequestRegenerateDay={handleRequestRegenerateDay}
-          onAddSteeringNote={handleAddSteeringNote}
+              steeringNotes,
+            }}
+            onToggleHotelBaseLock={handleToggleHotelBaseLock}
+            onTogglePlaceLock={handleToggleSelectedPlaceLock}
+            onTogglePriorityTheme={handleTogglePriorityTheme}
+            onRequestRegenerateDay={handleRequestRegenerateDay}
+            onAddSteeringNote={handleAddSteeringNote}
           />
         </section>
       ) : null}
@@ -917,7 +1079,6 @@ export function TripGenerationShell() {
                   regenerateDay,
                   steeringNotes,
                 }}
-                bookingHandoffVisible={false}
                 onToggleHotelBaseLock={handleToggleHotelBaseLock}
                 onTogglePlaceLock={handleToggleSelectedPlaceLock}
                 onTogglePriorityTheme={handleTogglePriorityTheme}
@@ -1298,13 +1459,14 @@ function AgentDecisionRail({
   days,
   hotelBase,
   steering,
-  bookingHandoffVisible,
+  bookingState,
   onToggleHotelBaseLock,
   onTogglePlaceLock,
   onTogglePriorityTheme,
   onRequestRegenerateDay,
   onAddSteeringNote,
-  onApprovePlan,
+  onRequestBookingMandate,
+  onConfirmHotelBooking,
 }: {
   status: GenerationStatus;
   logs: GenerationLog[];
@@ -1315,13 +1477,14 @@ function AgentDecisionRail({
   days: TripDay[];
   hotelBase?: TripHotelBase;
   steering: SteeringState;
-  bookingHandoffVisible: boolean;
+  bookingState?: BookingFlowState;
   onToggleHotelBaseLock: () => void;
   onTogglePlaceLock: (placeId: string) => void;
   onTogglePriorityTheme: (theme: string) => void;
   onRequestRegenerateDay: (day: number) => void;
   onAddSteeringNote: (note: string) => void;
-  onApprovePlan?: () => void;
+  onRequestBookingMandate?: () => void;
+  onConfirmHotelBooking?: () => void;
 }) {
   const [draftNote, setDraftNote] = useState("");
 
@@ -1396,8 +1559,9 @@ function AgentDecisionRail({
 
       {status === "trip_ready" ? (
         <PlanApprovalCard
-          handoffVisible={bookingHandoffVisible}
-          onApprovePlan={onApprovePlan}
+          bookingState={bookingState ?? INITIAL_BOOKING_FLOW_STATE}
+          onRequestBookingMandate={onRequestBookingMandate}
+          onConfirmHotelBooking={onConfirmHotelBooking}
         />
       ) : null}
 
@@ -1560,35 +1724,130 @@ function DecisionRow({
 }
 
 function PlanApprovalCard({
-  handoffVisible,
-  onApprovePlan,
+  bookingState,
+  onRequestBookingMandate,
+  onConfirmHotelBooking,
 }: {
-  handoffVisible: boolean;
-  onApprovePlan?: () => void;
+  bookingState: BookingFlowState;
+  onRequestBookingMandate?: () => void;
+  onConfirmHotelBooking?: () => void;
 }) {
+  const preview = bookingState.mandateResponse?.preview ?? null;
+  const receipt = bookingState.bookingResponse?.receipt ?? null;
+  const payment = bookingState.bookingResponse?.payment ?? receipt?.payment ?? preview?.payment;
+  const hotelName = receipt?.hotel?.name ?? preview?.hotel?.name ?? "Backend canonical demo hotel";
+  const stayLabel = formatStayLabel(receipt?.stay ?? preview?.stay);
+  const totalLabel = formatSgdAmount(
+    receipt?.pricing?.estimated_total_sgd ?? preview?.pricing?.estimated_total_sgd,
+  );
+  const paymentLabel = formatPaymentLabel(payment);
+  const txHash = getPaymentTxHash(payment);
+  const errorMessage = bookingState.errorMessage;
+  const isSigning = bookingState.status === "mandate_signing";
+  const isSubmitting = bookingState.status === "booking_submitting";
+  const canRequestMandate =
+    Boolean(onRequestBookingMandate) && !isSigning && !isSubmitting;
+  const canConfirmBooking =
+    Boolean(onConfirmHotelBooking) && bookingState.status === "mandate_ready";
+
   return (
     <section className="mt-3 rounded-lg border border-amber-200/30 bg-amber-200/12 p-3">
-      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-100">
-        Plan approval
-      </p>
-      <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-slate-200">
-        Approve the mapped itinerary to hand off hotel booking to the agentic payment flow.
-      </p>
-      <button
-        type="button"
-        onClick={onApprovePlan}
-        disabled={!onApprovePlan}
-        className="mt-2 h-8 w-full rounded-lg border border-amber-100/35 bg-amber-200 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Approve plan
-      </button>
-      {handoffVisible ? (
-        <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-semibold leading-4 text-slate-300">
-          Booking handoff placeholder: your teammates' payment agent will take over hotel
-          confirmation here. No real payment or booking is made from this screen.
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-100">
+            Human approval
+          </p>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
+            Confirm the hotel mandate before the agent runs x402 payment.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-amber-100">
+          {getBookingFlowLabel(bookingState.status)}
+        </span>
+      </div>
+
+      <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/45 px-3 py-2 text-[11px] font-semibold leading-4 text-slate-300">
+        Hotel fulfillment is mock-only. The x402 leg may move testnet USDC when real settlement mode is enabled.
+      </div>
+
+      {bookingState.status !== "idle" ? (
+        <div className="mt-2 grid gap-2">
+          <BookingDetailRow label="Hotel" value={hotelName} />
+          <BookingDetailRow label="Stay" value={stayLabel} />
+          <BookingDetailRow label="Estimate" value={totalLabel} />
+          <BookingDetailRow label="x402" value={paymentLabel} />
+          {receipt?.booking_id ? (
+            <BookingDetailRow label="Receipt" value={receipt.booking_id} />
+          ) : null}
+          {txHash ? (
+            <BookingDetailRow label="Tx hash" value={formatTxHash(txHash)} title={txHash} />
+          ) : null}
         </div>
       ) : null}
+
+      {receipt?.receipt_note ? (
+        <p className="mt-2 rounded-lg border border-teal-200/25 bg-teal-300/10 px-3 py-2 text-xs font-semibold leading-4 text-teal-50">
+          {receipt.receipt_note}
+        </p>
+      ) : null}
+
+      {errorMessage ? (
+        <p className="mt-2 rounded-lg border border-red-300/30 bg-red-400/12 px-3 py-2 text-xs font-semibold leading-4 text-red-100">
+          {errorMessage}
+        </p>
+      ) : null}
+
+      {bookingState.status === "mandate_ready" ? (
+        <button
+          type="button"
+          onClick={onConfirmHotelBooking}
+          disabled={!canConfirmBooking}
+          className="mt-2 h-8 w-full rounded-lg border border-teal-100/35 bg-teal-200 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950 transition hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Submit booking
+        </button>
+      ) : bookingState.status === "confirmed" ? (
+        <button
+          type="button"
+          disabled
+          className="mt-2 h-8 w-full rounded-lg border border-teal-100/35 bg-teal-200 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950 opacity-70"
+        >
+          Booking confirmed
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onRequestBookingMandate}
+          disabled={!canRequestMandate}
+          className="mt-2 h-8 w-full rounded-lg border border-amber-100/35 bg-amber-200 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSigning
+            ? "Signing AP2 mandate"
+            : isSubmitting
+              ? "Submitting booking"
+              : "Confirm Hotel Booking"}
+        </button>
+      )}
     </section>
+  );
+}
+
+function BookingDetailRow({
+  label,
+  value,
+  title,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/8 px-3 py-2" title={title}>
+      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-1 truncate text-xs font-black text-slate-100">{value}</p>
+    </div>
   );
 }
 
@@ -1741,6 +2000,112 @@ function getErrorMessage(error: unknown) {
   }
 
   return "Something went wrong while generating the trip.";
+}
+
+function getBackendErrorMessage(
+  error: { message?: string } | null | undefined,
+  fallback: string,
+) {
+  return error?.message?.trim() || fallback;
+}
+
+function buildMandateLogDetail(response: AP2MandateResponse) {
+  const mandateId = response.ap2?.mandate_id ?? "demo mandate";
+  const hotelName = response.preview?.hotel?.name ?? "the canonical demo hotel";
+  const payment = response.preview?.payment;
+  const paymentText =
+    payment?.amount && payment.asset
+      ? `${payment.amount} ${payment.asset}`
+      : "x402 payment";
+  const networkText = payment?.network ? ` on ${payment.network}` : "";
+
+  return `${mandateId} signed for ${hotelName}; ${paymentText}${networkText}.`;
+}
+
+function buildBookingLogDetail(response: HotelBookingResponse) {
+  const bookingId = response.receipt?.booking_id ?? "mock hotel booking";
+  const paymentStatus = response.payment?.status ?? response.receipt?.payment?.status;
+  const statusText = paymentStatus ? ` Payment ${paymentStatus}.` : "";
+
+  return `${bookingId} receipt issued.${statusText}`;
+}
+
+function getBookingFlowLabel(status: BookingFlowStatus) {
+  const labels: Record<BookingFlowStatus, string> = {
+    idle: "Ready",
+    mandate_signing: "Signing",
+    mandate_ready: "Mandate ready",
+    booking_submitting: "Paying",
+    confirmed: "Confirmed",
+    rejected: "Rejected",
+    failed: "Failed",
+  };
+
+  return labels[status];
+}
+
+function formatStayLabel(
+  stay:
+    | {
+        checkin?: string;
+        checkout?: string;
+        nights?: number;
+        guests?: number;
+      }
+    | null
+    | undefined,
+) {
+  if (!stay?.checkin || !stay.checkout) {
+    return "Backend preview pending";
+  }
+
+  const guestText = typeof stay.guests === "number" ? `, ${stay.guests} guests` : "";
+  const nightsText = typeof stay.nights === "number" ? ` (${stay.nights} nights${guestText})` : "";
+
+  return `${stay.checkin} to ${stay.checkout}${nightsText}`;
+}
+
+function formatSgdAmount(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? `SGD ${value.toLocaleString("en-SG")}`
+    : "Backend estimate pending";
+}
+
+function formatPaymentLabel(
+  payment:
+    | {
+        protocol?: string;
+        network?: string;
+        asset?: string;
+        amount?: string;
+        status?: string;
+      }
+    | null
+    | undefined,
+) {
+  if (!payment) {
+    return "x402 terms pending";
+  }
+
+  const protocol = payment.protocol ?? "x402";
+  const amount = [payment.amount, payment.asset].filter(Boolean).join(" ");
+  const network = payment.network ? ` on ${payment.network}` : "";
+  const status = payment.status ? ` (${payment.status})` : "";
+
+  return `${protocol}${amount ? ` ${amount}` : ""}${network}${status}`;
+}
+
+function getPaymentTxHash(payment: unknown) {
+  if (!payment || typeof payment !== "object" || Array.isArray(payment)) {
+    return "";
+  }
+
+  const txHash = (payment as { tx_hash?: unknown }).tx_hash;
+  return typeof txHash === "string" ? txHash : "";
+}
+
+function formatTxHash(txHash: string) {
+  return txHash.length > 18 ? `${txHash.slice(0, 10)}...${txHash.slice(-8)}` : txHash;
 }
 
 function readStreamEventRecord(value: unknown) {

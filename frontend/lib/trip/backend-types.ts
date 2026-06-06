@@ -183,6 +183,130 @@ export type PaymentContext = {
   [key: string]: unknown;
 };
 
+export type BackendErrorPayload = {
+  code?: string;
+  message: string;
+  [key: string]: unknown;
+};
+
+export type AP2SignedMandate = {
+  format: string;
+  "protected": string;
+  payload: string;
+  signature: string;
+  payload_json?: Record<string, unknown>;
+};
+
+export type AP2MandateSummary = {
+  status: string;
+  mode?: string;
+  mandate_id?: string;
+  checkout_hash?: string;
+  confirmation_id?: string;
+  confirmed_at?: string;
+  issuer?: string;
+  signed_mandate?: AP2SignedMandate | null;
+};
+
+export type HotelBookingPreview = {
+  hotel?: {
+    id?: string;
+    name?: string;
+    city?: string;
+    area?: string;
+    room_type?: string;
+    cancellation_policy?: string;
+  };
+  stay?: {
+    checkin?: string;
+    checkout?: string;
+    nights?: number;
+    guests?: number;
+  };
+  pricing?: {
+    price_per_night_sgd?: number;
+    estimated_total_sgd?: number;
+    agent_payment_usd?: string;
+  };
+  payment?: {
+    protocol?: string;
+    network?: string;
+    asset?: string;
+    amount?: string;
+    payer?: string;
+    payee?: string;
+    payment_request_id?: string;
+  };
+};
+
+export type AP2MandateResponse = {
+  status: "signed" | "rejected" | string;
+  ap2?: AP2MandateSummary | null;
+  preview?: HotelBookingPreview | null;
+  error?: BackendErrorPayload | null;
+};
+
+export type HotelBookingPayment = {
+  protocol?: string;
+  network?: string;
+  asset?: string;
+  amount?: string;
+  payer?: string;
+  payee?: string;
+  tx_hash?: string;
+  status?: "simulated" | "settled" | "failed" | string;
+};
+
+export type HotelBookingReceipt = {
+  type?: string;
+  booking_id?: string;
+  status?: string;
+  is_mock?: boolean;
+  hotel?: {
+    id?: string;
+    name?: string;
+    area?: string;
+    city?: string;
+    room_type?: string;
+    cancellation_policy?: string;
+  };
+  stay?: {
+    checkin?: string;
+    checkout?: string;
+    nights?: number;
+    guests?: number;
+  };
+  pricing?: {
+    price_per_night_sgd?: number;
+    estimated_total_sgd?: number;
+    agent_payment_usd?: string;
+  };
+  payment?: HotelBookingPayment;
+  mandate?: {
+    mandate_id?: string;
+    allowed_action?: string;
+    mock_booking_only?: boolean;
+  };
+  ap2?: AP2MandateSummary | null;
+  receipt_note?: string;
+};
+
+export type HotelBookingAuditEvent = {
+  type: string;
+  message: string;
+  simulated?: boolean | null;
+};
+
+export type HotelBookingResponse = {
+  status: "mock_confirmed" | "rejected" | string;
+  audit_events?: HotelBookingAuditEvent[];
+  payment_required?: unknown;
+  payment?: HotelBookingPayment | null;
+  receipt?: HotelBookingReceipt | null;
+  ap2?: AP2MandateSummary | null;
+  error?: BackendErrorPayload | null;
+};
+
 // One of the 3 hotel recommendations on the itinerary (from spike_planner.py).
 // Exactly one has is_best=true (the recommended_hotel / selected_hotel_id).
 export type HotelOption = {
