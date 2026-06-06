@@ -41,7 +41,9 @@ export function PlaceIntelPanel({
   const travelFit = buildTravelFitText(place, day, intel.howToGo);
   const routePreview = buildRoutePreview(place, days, places);
   const confidenceLabel =
-    typeof place.confidence === "number" ? `${Math.round(place.confidence * 100)}%` : "Source";
+    typeof place.confidence === "number"
+      ? `${Math.round(place.confidence * 100)}% match`
+      : "Source";
 
   return (
     <div className="space-y-3">
@@ -130,33 +132,6 @@ export function PlaceIntelPanel({
         <RoutePreviewPanel active={routePreviewActive} preview={routePreview} />
       ) : null}
 
-      {onToggleLock || onRequestRegenerateDay ? (
-        <div className="grid gap-2">
-          {onToggleLock ? (
-            <button
-              type="button"
-              onClick={() => onToggleLock(place.id)}
-              className={[
-                "h-8 rounded-lg border px-3 text-[11px] font-black uppercase tracking-[0.12em] transition",
-                locked
-                  ? "border-teal-200/45 bg-teal-300/14 text-teal-100"
-                  : "border-white/10 bg-white/8 text-slate-200 hover:bg-white/12",
-              ].join(" ")}
-            >
-              {locked ? "Stop locked" : "Lock this stop"}
-            </button>
-          ) : null}
-          {onRequestRegenerateDay ? (
-            <button
-              type="button"
-              onClick={() => onRequestRegenerateDay(place.day)}
-              className="h-8 rounded-lg border border-amber-200/35 bg-amber-200/14 px-3 text-[11px] font-black uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-200/22"
-            >
-              Regenerate Day {place.day}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -227,7 +202,7 @@ function RoutePreviewPanel({
           <li
             key={stop.id}
             className={[
-              "grid grid-cols-[24px_1fr] items-center gap-2 rounded-lg border px-2 py-1.5",
+              "grid grid-cols-[24px_3.5rem_1fr] items-center gap-2 rounded-lg border px-2 py-1.5",
               stop.selected
                 ? "border-amber-200/45 bg-amber-200/12"
                 : "border-white/8 bg-slate-950/28",
@@ -242,6 +217,9 @@ function RoutePreviewPanel({
               ].join(" ")}
             >
               {index + 1}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-[0.08em] text-teal-100/80">
+              {stop.timeOfDay ?? "route"}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-xs font-black text-white">

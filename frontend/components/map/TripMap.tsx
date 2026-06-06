@@ -11,6 +11,13 @@ import type {
 } from "mapbox-gl";
 import { coerceSafeMapCenter, isValidLngLatValue } from "@/lib/trip/geo";
 import {
+  buildDayRoutePlans,
+  fetchMapboxDirectionsGeometry,
+  findRouteLegForPlace,
+  type DayRouteLeg,
+  type DayRoutePlan,
+} from "@/lib/trip/day-route";
+import {
   getMapCalloutPosition,
   type MapCalloutPosition,
 } from "@/lib/trip/map-overlay";
@@ -31,6 +38,7 @@ type TripMapProps = {
   selectedDay: DayFilter;
   selectedRouteDay?: TripDay["day"] | null;
   places: TripPlace[];
+  routePlaces?: TripPlace[];
   selectedPlace: TripPlace | null;
   hotelBase?: TripHotelBase;
   onSelectPlace: (placeId: string) => void;
@@ -39,6 +47,9 @@ type TripMapProps = {
 
 type RouteFeatureProperties = {
   day: number;
+  legIndex: number;
+  fromName: string;
+  toName: string;
   active: boolean;
 };
 type RouteFeatureCollection = GeoJSON.FeatureCollection<
@@ -66,6 +77,17 @@ type HotelHubFeatureProperties = {
 type HotelHubFeatureCollection = GeoJSON.FeatureCollection<
   GeoJSON.Point,
   HotelHubFeatureProperties
+>;
+type RouteStopFeatureProperties = {
+  name: string;
+  day: number;
+  sequence: number;
+  active: boolean;
+  kind: string;
+};
+type RouteStopFeatureCollection = GeoJSON.FeatureCollection<
+  GeoJSON.Point,
+  RouteStopFeatureProperties
 >;
 type SelectedPlaceCalloutLayout = MapCalloutPosition & {
   width: number;
@@ -103,6 +125,10 @@ const ROUTE_CASING_LAYER_ID = "tripcanvas-routes-casing";
 const ROUTE_UNDERLAY_LAYER_ID = "tripcanvas-routes-underlay";
 const ROUTE_ACTIVE_LAYER_ID = "tripcanvas-routes-active";
 const ROUTE_ACTIVE_DASH_LAYER_ID = "tripcanvas-routes-active-dash";
+const ROUTE_STOP_SOURCE_ID = "tripcanvas-route-stops";
+const ROUTE_STOP_HALO_LAYER_ID = "tripcanvas-route-stop-halos";
+const ROUTE_STOP_NUMBER_LAYER_ID = "tripcanvas-route-stop-numbers";
+const ROUTE_STOP_LABEL_LAYER_ID = "tripcanvas-route-stop-labels";
 const PLACE_SOURCE_ID = "tripcanvas-places";
 const PLACE_CLUSTER_LAYER_ID = "tripcanvas-place-clusters";
 const PLACE_CLUSTER_COUNT_LAYER_ID = "tripcanvas-place-cluster-counts";
@@ -127,6 +153,10 @@ const EMPTY_PLACE_COLLECTION: PlaceFeatureCollection = {
   features: [],
 };
 const EMPTY_HOTEL_HUB_COLLECTION: HotelHubFeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
+const EMPTY_ROUTE_STOP_COLLECTION: RouteStopFeatureCollection = {
   type: "FeatureCollection",
   features: [],
 };
@@ -156,6 +186,7 @@ export function TripMap({
   selectedDay,
   selectedRouteDay,
   places,
+  routePlaces,
   selectedPlace,
   hotelBase,
   onSelectPlace,
@@ -175,19 +206,53 @@ export function TripMap({
   const [mapReady, setMapReady] = useState(false);
   const [selectedCalloutLayout, setSelectedCalloutLayout] =
     useState<SelectedPlaceCalloutLayout | null>(null);
+  const [directionsBySignature, setDirectionsBySignature] = useState<
+    Record<string, [number, number][]>
+  >({});
   const safeCenter = useMemo(
     () => coerceSafeMapCenter(center),
     [center.lat, center.lng],
   );
+  const routeSourcePlaces = routePlaces ?? places;
+  const activeRouteDay = selectedDay === "all"
+    ? selectedRouteDay ?? selectedPlace?.day ?? null
+    : selectedDay;
+  const routePlans = useMemo(
+    () => buildDayRoutePlans(days, routeSourcePlaces, hotelBase),
+    [days, hotelBase, routeSourcePlaces],
+  );
+  const activeRouteLegId = useMemo(() => {
+    if (!selectedPlace) {
+      return null;
+    }
+
+    const selectedDayPlan = routePlans.find((plan) => plan.day === selectedPlace.day);
+    return selectedDayPlan ? findRouteLegForPlace(selectedDayPlan, selectedPlace)?.id ?? null : null;
+  }, [routePlans, selectedPlace]);
   const routeCollection = useMemo(
     () =>
       buildRouteFeatureCollection(
         days,
-        places,
+        routeSourcePlaces,
         selectedDay,
-        selectedRouteDay ?? selectedPlace?.day ?? null,
+        activeRouteDay,
+        activeRouteLegId,
+        hotelBase,
+        directionsBySignature,
       ),
-    [days, places, selectedDay, selectedPlace?.day, selectedRouteDay],
+    [
+      activeRouteDay,
+      activeRouteLegId,
+      days,
+      directionsBySignature,
+      hotelBase,
+      routeSourcePlaces,
+      selectedDay,
+    ],
+  );
+  const routeStopCollection = useMemo(
+    () => buildRouteStopFeatureCollection(routePlans, selectedDay, activeRouteDay),
+    [activeRouteDay, routePlans, selectedDay],
   );
   const hotelHub = useMemo(
     () => deriveHotelHub(hotelBase),
@@ -297,6 +362,7 @@ export function TripMap({
           addReliable3DBuildingsLayer(map);
         }
         ensureRouteLayers(map);
+        ensureRouteStopLayers(map);
         ensurePlaceLayers(map);
         ensureHotelHubLayers(map);
         registerPlaceInteractions(map, prefersReducedMotionRef, onSelectPlaceRef);
@@ -412,6 +478,71 @@ export function TripMap({
       (source as GeoJSONSource).setData(routeCollection);
     }
   }, [mapReady, routeCollection]);
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) {
+      return;
+    }
+
+    const map = mapRef.current;
+    ensureRouteStopLayers(map);
+
+    const source = map.getSource(ROUTE_STOP_SOURCE_ID);
+    if (source && "setData" in source) {
+      (source as GeoJSONSource).setData(routeStopCollection);
+    }
+  }, [mapReady, routeStopCollection]);
+
+  useEffect(() => {
+    if (!mapboxToken || mode === "globe" || routePlans.length === 0) {
+      setDirectionsBySignature({});
+      return;
+    }
+
+    const controller = new AbortController();
+    let active = true;
+
+    Promise.all(
+      routePlans.flatMap((plan) => plan.legs).map(async (leg) => {
+        const geometry = await fetchMapboxDirectionsGeometry({
+          waypoints: leg.waypoints,
+          mapboxToken,
+          signal: controller.signal,
+        });
+
+        return [leg.signature, geometry] as const;
+      }),
+    )
+      .then((entries) => {
+        if (!active || controller.signal.aborted) {
+          return;
+        }
+
+        const nextDirections: Record<string, [number, number][]> = {};
+        entries.forEach(([signature, geometry]) => {
+          if (geometry.length >= 2) {
+            nextDirections[signature] = geometry;
+          }
+        });
+        setDirectionsBySignature(nextDirections);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        console.warn(
+          "[TripCanvas map] Directions route unavailable; using shaped route fallback.",
+          redactMapboxAccessToken(getUnknownErrorMessage(error)),
+        );
+        setDirectionsBySignature({});
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [mapboxToken, mode, routePlans]);
 
   useEffect(() => {
     if (!mapReady || !mapRef.current) {
@@ -669,7 +800,7 @@ export function TripMap({
 
   return (
     <>
-      <div className="absolute inset-0 h-screen w-screen">
+      <div className="absolute inset-0 h-full w-full">
         <div
           ref={mapContainerRef}
           data-trip-map-container
@@ -682,8 +813,16 @@ export function TripMap({
         />
       </div>
       <div className="tc-map-vignette pointer-events-none absolute inset-0" />
+      {mode !== "globe" && routeSourcePlaces.length > 0 ? (
+        <div
+          data-testid="extracted-reel-places-map-badge"
+          className="pointer-events-none absolute left-1/2 top-5 z-10 hidden -translate-x-1/2 rounded-full border border-amber-200/35 bg-[#101821]/78 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-amber-100 shadow-2xl shadow-black/30 backdrop-blur-xl md:block"
+        >
+          Extracted Reel places / {routeSourcePlaces.length} pinned
+        </div>
+      ) : null}
       {hotelHubName ? (
-        <div className="pointer-events-none absolute left-1/2 top-5 z-10 hidden -translate-x-1/2 rounded-full border border-amber-200/30 bg-slate-950/72 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-amber-100 shadow-2xl shadow-black/30 backdrop-blur-xl md:block">
+        <div className="pointer-events-none absolute left-1/2 top-16 z-10 hidden -translate-x-1/2 rounded-full border border-cyan-100/25 bg-slate-950/72 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-100 shadow-2xl shadow-black/30 backdrop-blur-xl md:block">
           Base near {hotelHubName}
         </div>
       ) : null}
@@ -1053,7 +1192,7 @@ function ensureRouteLayers(map: Map) {
           "case",
           ["boolean", ["get", "active"], false],
           0.76,
-          0.2,
+          0.08,
         ],
         "line-blur": 0.7,
         "line-emissive-strength": 0.2,
@@ -1089,7 +1228,7 @@ function ensureRouteLayers(map: Map) {
           "case",
           ["boolean", ["get", "active"], false],
           0.86,
-          0.26,
+          0.1,
         ],
         "line-blur": 1.2,
         "line-emissive-strength": 0.5,
@@ -1137,6 +1276,108 @@ function ensureRouteLayers(map: Map) {
       },
     });
   }
+}
+
+function ensureRouteStopLayers(map: Map) {
+  if (!map.getSource(ROUTE_STOP_SOURCE_ID)) {
+    map.addSource(ROUTE_STOP_SOURCE_ID, {
+      type: "geojson",
+      data: EMPTY_ROUTE_STOP_COLLECTION,
+    });
+  }
+
+  const routeStopHaloLayer: AnyLayer = {
+    id: ROUTE_STOP_HALO_LAYER_ID,
+    type: "circle",
+    source: ROUTE_STOP_SOURCE_ID,
+    slot: "top",
+    paint: {
+      "circle-color": [
+        "case",
+        ["boolean", ["get", "active"], false],
+        [
+          "match",
+          ["get", "kind"],
+          "airport",
+          "#60a5fa",
+          "selected-hotel",
+          "#67e8f9",
+          "extracted-place",
+          "#fde68a",
+          "#c4b5fd",
+        ],
+        "rgba(148, 163, 184, 0.7)",
+      ],
+      "circle-radius": [
+        "case",
+        ["boolean", ["get", "active"], false],
+        15,
+        10,
+      ],
+      "circle-opacity": [
+        "case",
+        ["boolean", ["get", "active"], false],
+        0.88,
+        0.36,
+      ],
+      "circle-stroke-color": "rgba(15, 23, 42, 0.82)",
+      "circle-stroke-width": 2,
+      "circle-blur": 0.04,
+      "circle-emissive-strength": 0.32,
+    },
+  };
+
+  const routeStopNumberLayer: AnyLayer = {
+    id: ROUTE_STOP_NUMBER_LAYER_ID,
+    type: "symbol",
+    source: ROUTE_STOP_SOURCE_ID,
+    slot: "top",
+    layout: {
+      "text-field": ["to-string", ["get", "sequence"]],
+      "text-font": ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
+      "text-size": [
+        "case",
+        ["boolean", ["get", "active"], false],
+        11,
+        9,
+      ],
+      "text-allow-overlap": true,
+      "text-ignore-placement": true,
+    },
+    paint: {
+      "text-color": "rgba(2, 6, 23, 0.92)",
+      "text-emissive-strength": 0.22,
+    },
+  };
+
+  const routeStopLabelLayer: AnyLayer = {
+    id: ROUTE_STOP_LABEL_LAYER_ID,
+    type: "symbol",
+    source: ROUTE_STOP_SOURCE_ID,
+    slot: "top",
+    filter: ["==", ["get", "active"], true],
+    layout: {
+      "text-field": ["get", "name"],
+      "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Regular"],
+      "text-size": 11,
+      "text-offset": [0, 1.55],
+      "text-anchor": "top",
+      "text-max-width": 9,
+      "text-allow-overlap": false,
+    },
+    paint: {
+      "text-color": "#f8fafc",
+      "text-halo-color": "rgba(15, 23, 42, 0.84)",
+      "text-halo-width": 1.4,
+      "text-emissive-strength": 0.32,
+    },
+  };
+
+  [routeStopHaloLayer, routeStopNumberLayer, routeStopLabelLayer].forEach((layer) => {
+    if (!map.getLayer(layer.id)) {
+      map.addLayer(layer);
+    }
+  });
 }
 
 function ensurePlaceLayers(map: Map) {
@@ -1490,43 +1731,124 @@ function buildRouteFeatureCollection(
   places: TripPlace[],
   selectedDay: DayFilter,
   selectedRouteDay: TripDay["day"] | null,
+  activeRouteLegId: string | null,
+  hotelBase: TripHotelBase | undefined,
+  directionsBySignature: Readonly<Record<string, [number, number][]>>,
 ): RouteFeatureCollection {
   const routeDays =
     selectedDay === "all" ? days : days.filter((day) => day.day === selectedDay);
   const activeRouteDay = selectedDay === "all" ? selectedRouteDay : selectedDay;
+  const routePlans = buildDayRoutePlans(routeDays, places, hotelBase);
   const placeById = new globalThis.Map<string, TripPlace>();
   places.forEach((place) => {
     placeById.set(place.id, place);
   });
   const features: RouteFeatureCollection["features"] = [];
 
-  routeDays.forEach((day) => {
-    const coordinates =
-      day.route?.coordinates && day.route.coordinates.length >= 2
-        ? day.route.coordinates
-        : buildFallbackRouteCoordinates(day, placeById);
+  routePlans.forEach((plan) => {
+    plan.legs.forEach((leg) => {
+      const coordinates = buildLegRouteCoordinates(leg, directionsBySignature);
+      if (coordinates.length < 2) {
+        return;
+      }
 
-    if (coordinates.length < 2) {
-      return;
-    }
-
-    features.push({
-      type: "Feature",
-      id: `day-${day.day}`,
-      properties: {
-        day: day.day,
-        active: activeRouteDay !== null && day.day === activeRouteDay,
-      },
-      geometry: {
-        type: "LineString",
-        coordinates,
-      },
+      features.push({
+        type: "Feature",
+        id: leg.id,
+        properties: {
+          day: plan.day,
+          legIndex: leg.sequence,
+          fromName: leg.from.name,
+          toName: leg.to.name,
+          active: activeRouteLegId
+            ? leg.id === activeRouteLegId
+            : activeRouteDay !== null && plan.day === activeRouteDay,
+        },
+        geometry: {
+          type: "LineString",
+          coordinates,
+        },
+      });
     });
   });
+
+  if (features.length === 0) {
+    routeDays.forEach((day) => {
+      const coordinates =
+        day.route?.coordinates && day.route.coordinates.length >= 2
+          ? day.route.coordinates
+          : buildFallbackRouteCoordinates(day, placeById);
+
+      if (coordinates.length < 2) {
+        return;
+      }
+
+      features.push({
+        type: "Feature",
+        id: `day-${day.day}`,
+        properties: {
+          day: day.day,
+          legIndex: 1,
+          fromName: `Day ${day.day}`,
+          toName: `Day ${day.day}`,
+          active: activeRouteDay !== null && day.day === activeRouteDay,
+        },
+        geometry: {
+          type: "LineString",
+          coordinates,
+        },
+      });
+    });
+  }
 
   return {
     type: "FeatureCollection",
     features,
+  };
+}
+
+function buildLegRouteCoordinates(
+  leg: DayRouteLeg,
+  directionsBySignature: Readonly<Record<string, [number, number][]>>,
+) {
+  const directionsRoute = directionsBySignature[leg.signature];
+  if (directionsRoute && directionsRoute.length >= 2) {
+    return directionsRoute;
+  }
+
+  return leg.fallbackCoordinates;
+}
+
+function buildRouteStopFeatureCollection(
+  routePlans: DayRoutePlan[],
+  selectedDay: DayFilter,
+  activeRouteDay: TripDay["day"] | null,
+): RouteStopFeatureCollection {
+  const routeDays =
+    selectedDay === "all"
+      ? routePlans
+      : routePlans.filter((plan) => plan.day === selectedDay);
+  const highlightedDay = selectedDay === "all" ? activeRouteDay : selectedDay;
+
+  return {
+    type: "FeatureCollection",
+    features: routeDays.flatMap((plan) =>
+      plan.stops.map((stop, index) => ({
+        type: "Feature" as const,
+        id: `day-${plan.day}-route-stop-${index}`,
+        properties: {
+          name: stop.name,
+          day: plan.day,
+          sequence: index + 1,
+          active: highlightedDay !== null && plan.day === highlightedDay,
+          kind: stop.kind,
+        },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [stop.lng, stop.lat] as [number, number],
+        },
+      })),
+    ),
   };
 }
 

@@ -117,6 +117,56 @@ test("buildItineraryTimeline groups days with ordered stops and route labels", (
   assert.equal(timeline[1].routeLabel, "1 mapped stop");
 });
 
+test("buildItineraryTimeline uses structured day stops including supporting itinerary places", () => {
+  const timeline = itineraryUi.buildItineraryTimeline(
+    [
+      {
+        day: 1,
+        title: "Arrival loop",
+        summary: "Airport, garden, hotel, dinner.",
+        placeIds: ["hotel"],
+        stops: [
+          {
+            timeOfDay: "morning",
+            name: "Hamarikyu Gardens",
+            category: "attraction",
+            isAnchor: false,
+          },
+          {
+            timeOfDay: "afternoon",
+            name: "The Royal Park Hotel Iconic Tokyo Shiodome",
+            category: "hotel",
+            isAnchor: true,
+            placeName: "The Royal Park Hotel Iconic Tokyo Shiodome",
+          },
+          {
+            timeOfDay: "evening",
+            name: "Tokyo Midtown",
+            category: "shopping",
+            isAnchor: false,
+          },
+        ],
+      },
+    ],
+    places,
+    "hotel",
+  );
+
+  assert.deepEqual(
+    timeline[0].stops.map((stop) => [
+      stop.name,
+      stop.timeOfDay,
+      stop.selectable,
+      stop.selected,
+    ]),
+    [
+      ["Hamarikyu Gardens", "morning", false, false],
+      ["The Royal Park Hotel Iconic Tokyo Shiodome", "afternoon", true, true],
+      ["Tokyo Midtown", "evening", false, false],
+    ],
+  );
+});
+
 test("splitItineraryTextSections preserves long morning copy instead of truncating it", () => {
   const sections = itineraryUi.splitItineraryTextSections(places[1].dayPlanText);
 

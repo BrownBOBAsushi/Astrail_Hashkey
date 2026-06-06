@@ -1,260 +1,212 @@
 # TripCanvas
 
-AI-native travel planner — Instagram Reels → live agent research → **Mapbox 3D map** itinerary with **agentic payment** (AP2 + x402). Hackathon submission for **Sea × OpenAI Codex Hackathon, 6 June 2026, Singapore** (code freeze 17:00 SGT).
+Team TripCanvas submission for the **Sea x OpenAI Regional Codex Hackathon - Singapore**.
 
-> **Pivot (2026-06-06):** TripCanvas moved off the flipbook/pop-up-book metaphor to a **Mapbox 3D map**, and off Duffel to an **AP2 + x402 agentic-payment seam** — the agent performs a *real* payment while the *booking stays mock*. The itinerary now surfaces **3 hotel recommendations + a best pick**. See [CLAUDE.md](CLAUDE.md) for the backend contracts and [AGENTS.md](AGENTS.md) for agent guidance.
+Track: **(2) AI-Native Products & Operations**
 
----
+TripCanvas is an AI-native travel planner that turns saved Instagram Reels into a mapped, explainable, bookable trip plan. Instead of treating AI as a chat box beside a travel app, TripCanvas makes the AI workflow the operating layer: it extracts places, researches tradeoffs, chooses a hotel base, sequences the itinerary, explains why each stop was chosen, and hands off to a human-approved AI-assisted AP2 + x402 hotel-payment flow.
 
-## Current State (2026-06-06)
+## Demo Flow
 
-| Phase | What | Status |
-|---|---|---|
-| 0 | Apify MCP integration (`backend/spike.py`) | ✅ |
-| 0.5 | Reels → places extraction (`backend/spike_e2e.py`) | ✅ 4 reels, 9 places, ALL 7 gates pass |
-| 1.5 | Places → itinerary planner (`backend/spike_planner.py`) | ✅ ALL 6 gates pass, live URLs |
-| 2 | Unified e2e + planner driver (`backend/spike_e2e_planner.py`) | ✅ Codex 7.4/10 PASS, both cache + live paths work |
-| 4 | FastAPI `/extract` + `/itinerary` SSE (`backend/main.py`) | ✅ Codex 8.6/10 PASS, SSE contract verified |
-| 4.5 | Hotel-base optimizer `/hotel-base` (3 recs + best pick) | ✅ `_MAX_HOTELS=3`, surfaced into `hotel_options` |
-| 5 | Agentic payment seam — AP2 + x402 (`spike_booking.py`) | 🟡 mock seam this round (`MockSettlementProvider`); real client = Zhi Hao next round |
-| 6 | **Mapbox 3D map** render with extracted-place pins (Shaun) | ⏳ next round (frontend revamp) |
-| 7 | 3D map → streaming AI agent panel (Shaun) | ⏳ next round |
+1. Paste 3-4 Instagram Reel URLs, dates, budget, origin city, and trip preferences.
+2. Backend agents extract real places from messy Reel content and geocode them.
+3. The frontend immediately moves from a Mapbox globe into the destination map.
+4. Agents research places, weather, hotel-base tradeoffs, and itinerary feasibility.
+5. TripCanvas renders the plan as a tilted Mapbox 3D map with pins, hotel base, day route segments, and itinerary cards.
+6. Selecting any extracted place shows why the agent chose it, what to do there, evidence, timing, tradeoffs, and route context.
+7. After approval, the hotel booking handoff uses AP2 mandate approval and an x402 payment loop.
 
----
+For demo reliability, the UI also includes:
 
-## Quick Start
+- **Demo Reels** quick fill for the canonical hackathon Reel set.
+- **Backend Cache** one-click replay from committed backend caches.
+- Clear source state when cache data is used.
 
-### 1. Install + boot
+## Why This Is AI-Native
 
-```bash
-uv sync                                              # install deps
-uv run uvicorn backend.main:app --port 8000          # start FastAPI server
-```
+TripCanvas is designed around AI-assisted operations, not AI autocomplete.
 
-Health: `curl http://localhost:8000/health` → `{"status":"ok","service":"tripcanvas-backend"}`
+- **Messy input becomes structured action:** saved Reels are converted into real mapped places, hotel decisions, and a day-by-day itinerary.
+- **The agent shows its work at product level:** users see confidence, evidence, source state, stage progress, hotel-base reasoning, weather strategy, and route tradeoffs without exposing hidden chain-of-thought.
+- **The map is the planning surface:** the user does not read a static itinerary first; they inspect the agent's decisions spatially through a 3D map, selected-place rationale, and per-day route legs.
+- **Operations are resilient:** live extraction/planning can fall back to committed cache data so the demo remains fast and dependable.
+- **The final step is human-approved action:** payment is AI-assisted, but not AI-controlled. AP2 captures the user's explicit approval and constraints before the x402 payment loop runs.
 
-### 2. Run the pipeline (two equivalent ways)
+## Human-in-the-Loop AI-Assisted Payment
 
-#### Option A — CLI one-shot (live extraction + planning)
+Payment is a core part of TripCanvas, but the AI does not get unchecked control of money movement. The planning system moves from recommendation to constrained execution only after the user approves the hotel plan. The backend then creates an AP2-style mandate, verifies that mandate, and runs the x402 hotel-payment loop within the approved constraints.
 
-```bash
-uv run python backend/spike_e2e_planner.py
-```
+What the demo shows:
 
-- Scrapes 4 reels via Apify MCP (~215s sequential)
-- Extracts places via `place_extractor` agent in parallel
-- Caps to top 5 by confidence (planner enricher budget)
-- Runs enricher + narrator agents
-- Total: **~365s end-to-end**
-- Writes `backend/data/places.json` + `backend/data/planner_output.json`
+- **AP2 approval:** the user authorizes a specific hotel-booking action before the agent can proceed.
+- **Human in the loop:** the AI can prepare the flow, but the approval boundary stays with the user.
+- **Mandate verification:** the backend checks the signed AP2 mandate before payment execution.
+- **x402 payment loop:** after approval, the payment service performs the pay step through an x402-shaped request, proof, settlement, and receipt flow.
+- **Frontend payment state:** the UI shows approval, x402 payment progress, receipt, transaction link, and wallet links when available.
+- **AI-native operations:** TripCanvas demonstrates how an AI product can safely move from planning to action while keeping human approval and payment constraints explicit.
 
-#### Option B — CLI cache-only (fast, replays last extraction)
+## Product Guardrails
 
-```bash
-USE_CACHE=true uv run python backend/spike_e2e_planner.py
-```
+TripCanvas is built to make AI useful without making it opaque or unchecked.
 
-- Skips extraction, loads `data/places.json` (already seeded)
-- Runs planner only
-- Total: **~120-170s**
+- **Human approval before payment:** AP2 records the user's approval and constraints before any x402 payment step can run.
+- **Verified mandate:** `/hotel-booking` checks the signed AP2 mandate before executing the payment loop.
+- **Constrained execution:** the payment handoff is scoped to the selected hotel booking, amount, and payment rail.
+- **Evidence without hidden reasoning:** the UI shows confidence, source evidence, rationale, and tradeoffs, but not hidden chain-of-thought.
+- **Reliable demo path:** committed caches and `GET /demo-cache` keep the live demo fast when scraping or long-running research is slow.
+- **Typed contracts:** backend Pydantic models and frontend TypeScript contracts keep extracted places, itinerary data, payment state, and SSE payloads predictable.
+- **Source visibility:** the UI labels cache/live source state so users know when the plan is replayed from the demo cache.
 
-#### Option C — HTTP via FastAPI (frontend-facing)
+## Final Frontend State
 
-```bash
-# 1) Pre-extract (one-time or pre-demo). Auto-falls back to cache if extraction >80s.
-curl -X POST http://localhost:8000/extract \
-  -H "Content-Type: application/json" \
-  -d '{"reel_urls":["https://www.instagram.com/reel/DYbmT-SNzVK/","https://www.instagram.com/reel/DYM_I5IvLSv/","https://www.instagram.com/reel/DYGH3jFBZHz/","https://www.instagram.com/reel/DXwcVVliX3B/"]}'
+The frontend is a Next.js App Router app in `frontend/`.
 
-# 2) Generate itinerary as SSE stream (~120-170s)
-curl -N -X POST http://localhost:8000/itinerary \
-  -H "Content-Type: application/json" \
-  -d '{
-    "preferences": {
-      "start_date": "2026-06-10",
-      "end_date": "2026-06-13",
-      "budget_level": "mid_range",
-      "free_text": "love ramen and onsen, prefer walking-friendly areas",
-      "origin_city": "Singapore"
-    }
-  }'
-```
+Implemented demo surface:
 
-The `/itinerary` SSE stream emits ~27 events:
+- Mapbox GL JS 3D globe as the first screen.
+- Reel URL input with dates, budget, origin city, and preferences.
+- `Demo Reels` and `Backend Cache` buttons for fast hackathon demos.
+- Generation timeline for extract, map grounding, hotel base, itinerary planning, and approval.
+- Full-screen tilted Mapbox 3D map with extracted-place pins.
+- Left trip panel with detected places, confidence labels, day filters, and category filters.
+- Extracted places are clickable; selecting one focuses the map and opens its explanation.
+- Route rendering is broken into one-location-to-one-location legs, with the selected leg emphasized.
+- Right AI panel explains the selected stop, evidence, tradeoffs, weather fit, and next action.
+- Bottom itinerary rail shows day-by-day route cards.
+- Human-in-the-loop payment panel for AP2 mandate approval and x402 hotel payment handoff.
 
-```
-data: {"type":"start","n_places_in":9,"n_places_used":5,"destination":"Tokyo"}
-data: {"type":"heartbeat","elapsed_s":5.0}
-... (24 heartbeats, one every 5s)
-data: {"type":"result","content":"<ItineraryOutput JSON>","elapsed_s":122.0}
-data: [DONE]
-```
+Frontend stack:
 
-Frontend **must** close `EventSource` on `data: [DONE]` (NOT on a `{type:"done"}` JSON event — that's not the contract).
+- Next.js 15
+- React 19
+- Tailwind CSS v4
+- `mapbox-gl` 3.24.0
+- `NEXT_PUBLIC_MAPBOX_TOKEN`
+- `NEXT_PUBLIC_BACKEND_URL`, defaulting to `http://localhost:8000`
 
----
+## Final Backend State
+
+The backend is a FastAPI service in `backend/`.
+
+Core endpoints:
+
+- `GET /health` - service health check.
+- `GET /demo-cache` - instant replay of committed places, hotel-base, and itinerary caches.
+- `POST /extract` - Reel URLs to extracted places, with cache fallback.
+- `POST /hotel-base` - streams hotel-base optimization.
+- `POST /itinerary` - POST SSE stream for final itinerary planning.
+- `POST /ap2/hotel-booking-mandate` - creates a signed AP2-style hotel mandate.
+- `POST /hotel-booking` - verifies mandate and runs the x402-shaped hotel payment loop.
+
+Backend capabilities:
+
+- OpenAI Agents SDK for extraction, research, hotel-base optimization, narration, and booking logic.
+- Apify Instagram Reel scraper integration for Reel ingestion.
+- Web research for place, hotel, flight, and itinerary context.
+- Open-Meteo weather data.
+- Committed demo caches:
+  - `backend/data/places.json`
+  - `backend/data/hotel_base_output.json`
+  - `backend/data/planner_output.json`
+- AP2 + x402 payment seam in `backend/spike_agentic_payments.py`.
+
+The backend keeps the demo dependable by separating live agent work from replayable cache data. The cache path is not a separate product mode; it is an operational guardrail for noisy network, scraper, and LLM latency during a live demo.
 
 ## Architecture
 
-```
-[Instagram Reels × N]
-   │
-   ▼  Stage 1: Apify MCP scrape (sequential, ~22s/reel)
-   │
-[ReelData × N]
-   │
-   ▼  Stage 2: place_extractor agent × N (parallel, WebSearchTool)
-   │
-[PlaceResult × N, deduped]
-   │
-   ▼  Top-5 by confidence (planner enricher budget)
-   │
-[ data/places.json — top 5 places ] ─────▶ frontend zooms the Mapbox 3D map
-   │
-   ▼  (optional) /hotel-base: hotel_base_agent → 3 hotel candidates + best pick
-   │
-   ▼  Stage 3: enricher agent (parallel web_search: places + hotel + flight)  ║  weather_agent (Open-Meteo)
-   │
-[EnrichedContext: hotel + flight + weather + per-place summaries]
-   │
-   ▼  Stage 4: narrator agent (ItineraryOutput JSON)  ║  booking_agent (deep links + PaymentProvider.settle → AP2/x402 mock)
-   │
-[ ItineraryOutput → Mapbox 3D map + streaming agent panel ]
-   • hotel_options[3, one is_best]   • bookings[items, each with a mock AP2/x402 settlement]
+```text
+Instagram Reels
+  -> Apify scraper
+  -> OpenAI extraction agents
+  -> real places + confidence + evidence
+  -> Mapbox globe zooms into destination
+  -> hotel-base agent chooses base area and hotel candidate
+  -> planner agents research weather, routing, timing, and preferences
+  -> itinerary JSON + payment context
+  -> Mapbox 3D trip canvas
+  -> AP2 approval
+  -> x402 hotel payment handoff
 ```
 
-### Timeout budgets (`spike_e2e_planner.py`)
+Frontend consumes `/itinerary` with `fetch()` streaming because it is a POST SSE endpoint. Streams terminate with:
 
-| Constant | Value | Why |
-|---|---:|---|
-| `_EXTRACTION_TIMEOUT` | 280s | empirical: spike_e2e.py = 215s, 65s buffer |
-| `_PIPELINE_TIMEOUT` | 500s | extraction 280 + planner 215 + 5s overhead |
-| `_MAX_PLACES` | 5 | keeps enricher within its 155s/12-search budget |
-
-### Three-layer cache fallback
-
-1. `USE_CACHE=true` env → skip extraction entirely, load `data/places.json`
-2. Live extraction exceeds `_EXTRACTION_TIMEOUT` OR returns empty → load `data/places.json`
-3. Planner exception OR `_PIPELINE_TIMEOUT` → return last `data/planner_output.json`
-
-Both cache files are **committed to git** as a non-negotiable demo guardrail and **self-refresh** on every successful live run.
-
----
-
-## What's Verified Working (2026-05-27)
-
-### `spike_e2e_planner.py` CLI
-
-- **Live one-shot** (`uv run python backend/spike_e2e_planner.py`) — extraction + planning in one command, ~365s with real Apify scrape + agent run.
-- **Cache path** (`USE_CACHE=true`) — 172s, replays from `data/places.json`.
-- Output: 4-day Tokyo itinerary with real hotel URL, real Scoot flight URL, 5/5 real per-attraction URLs.
-
-### FastAPI endpoints
-
-- `GET /health` → 200 in <1s
-- `POST /extract` → 200 in 81.5s (cache fallback at 80s budget), 9 places returned
-- `POST /itinerary` SSE → 27 events in 122s, all SSE contract checks pass
-- All 6 validation probes (empty body, missing field, enum constraints, list bounds) return clean HTTP 422
-- `GET /openapi.json` exposes both endpoints with 200/422 schemas for frontend codegen
-
----
-
-## Known Limitations
-
-1. **Cache files are demo-critical**. `backend/data/places.json` and `backend/data/planner_output.json` are committed to git as the demo safety net. If you wipe them locally, run `uv run python backend/spike_e2e_planner.py` once to re-seed before the demo.
-2. **Hotel choice is non-deterministic across runs** (Dormy Inn / Royal Park / Grand Hyatt have all appeared). Don't hardcode hotel names in the frontend — render the best pick from `result.recommended_hotel` and the 3 options from `result.hotel_options` (highlight the one with `is_best=true`).
-3. **`_MAX_PLACES = 5` cap**. Raising this requires also bumping `_ENRICHER_TIMEOUT` in `spike_planner.py` (each extra place adds one web_search call).
-4. **`backend/data/e2e_planner_output.json`** — local debug duplicate of `planner_output.json`, safe to leave untracked.
-5. **No automated tests yet** — hackathon scope. Coverage relies on smoke tests + Codex peer review.
-6. **FastAPI `/extract` uses the same 280s timeout as the CLI**. HTTP request can wait up to 280s before falling back to cache. Frontend should set generous timeout when calling `/extract`.
-
----
-
-## Round Plan
-
-### This round — backend (done in this PR)
-- **Hotel 3-rec:** `spike_hotel_base.py` returns 3 candidates + a best pick (`selected_hotel_id`); surfaced into `ItineraryOutput.hotel_options` (one `is_best`).
-- **Agentic-payment seam:** `spike_booking.py` gains a `PaymentProvider` abstraction with a default, no-network `MockSettlementProvider`. Each `BookingItem` now carries an optional `settlement` (AP2/x402 `PaymentSettlement`). Booking stays mock (`is_mock=True`); payment is a separate, swappable record.
-- **Duffel deprecated:** optional fallback only (skipped when no `DUFFEL_TEST_TOKEN`); the `_test_` guard still applies when a token is set.
-- **Schema-parity:** new types mirrored additively in `frontend/lib/trip/backend-types.ts` (types only — no UI yet).
-
-### Next round — Shaun: Mapbox 3D map frontend
-Rebuild the generation surface as a tilted/3D Mapbox map: globe → zoom into the extracted destination on `/extract` → place pins → streaming agent panel (consume `/itinerary` via `fetch()` streaming, close on `data: [DONE]`). Render hotels from `hotel_options` (highlight the `is_best`), and the payment overlay from `bookings[].settlement`. **Do not** revive the flipbook/pop-up book.
-
-### Next round — Zhi Hao: real AP2 + x402 settlement
-Replace `MockSettlementProvider` with a real `PaymentProvider`:
-1. **AP2** — build + sign an Intent Mandate (the user's constraints) and a Cart Mandate (the specific cart), proving the human authorized the agent's purchase.
-2. **x402** — request the paid resource → receive `402 Payment Required` → sign + attach the `X-PAYMENT` header → CDP facilitator verifies + settles **testnet** USDC → return `payment_status="settled"`, `is_mock_settlement=False`, real `settlement_id`.
-The booking items remain `is_mock=True`; only the `settlement` becomes real. No mainnet, no real money.
-
-### Pre-demo prep
-- Default to `USE_CACHE=true` for the demo path (no payment/Duffel/facilitator env vars needed).
-- Optionally re-seed live: `uv run python backend/spike_e2e_planner.py` (validates Apify quota + OpenAI auth + network), then commit the refreshed `data/*.json`.
-- **One canonical itinerary result:** `backend/data/planner_output.json` is the single source of truth teammates consume — keep it to one file (no `sample_*`/`e2e_*` duplicates).
-
----
-
-## Verification & Review Trail
-
-| Item | Result |
-|---|---|
-| Phase 2 unified driver — Codex peer review | **7.4/10 PASS** (no dim ≤3) |
-| Phase 2 — root-cause fix applied | `_EXTRACTION_TIMEOUT` 30→80→280, self-seeding cache writer |
-| Phase 4 `/itinerary` endpoint — Codex peer review | **8.6/10 PASS** (no dim ≤3) |
-| Phase 4 — cancellation safety fix applied | `try/finally: planner_task.cancel()` |
-| End-to-end verify (`verify` skill) | **PASS** — 2 happy-path steps + 6 probes + schema check |
-| Live SSE smoke test | 27 events in 122s, contract compliant |
-
----
-
-## File Map
-
-```
-tripcanvas/
-├── README.md                          # this file
-├── pyproject.toml                     # uv-managed deps (fastapi, openai-agents, etc)
-├── .env                               # OPENAI_API_KEY, APIFY_TOKEN, DEMO_REEL_URLS
-├── backend/
-│   ├── main.py                        # FastAPI app: /extract + /itinerary SSE
-│   ├── spike.py                       # Phase 0  — Apify MCP probe
-│   ├── spike_e2e.py                   # Phase 0.5 — reels → places (4 reels, 9 places verified)
-│   ├── spike_planner.py               # Phase 1.5 — places → itinerary (+ hotel_options)
-│   ├── spike_hotel_base.py            # hotel-base optimizer — 3 recs + best pick
-│   ├── spike_booking.py               # booking deep links + PaymentProvider seam (AP2/x402; Duffel deprecated)
-│   ├── spike_e2e_planner.py           # Phase 2   — unified driver, both cache + live paths work
-│   └── data/                          # exactly one JSON per purpose — no duplicates
-│       ├── places.json                # extraction cache (committed)
-│       ├── hotel_base_output.json     # hotel-base cache (committed; 3 candidates + best pick)
-│       └── planner_output.json        # THE single canonical itinerary result (committed;
-│                                      #   real verified run — hotel_options + per-item AP2/x402 settlements)
-└── frontend/                          # Next.js 15 + Mapbox GL JS 3D map (NOT a flipbook)
+```text
+data: {"type":"result","content":"<final JSON string>"}
+data: [DONE]
 ```
 
----
+## Running Locally
 
-## Required Env Vars (in `.env` at project root)
+Backend:
 
+```bash
+uv sync
+uv run uvicorn backend.main:app --port 8000
 ```
-# Required
-OPENAI_API_KEY=sk-...
-APIFY_TOKEN=apify_api_...
 
-# Optional (USE_CACHE=true demo path needs none of these)
-DEMO_REEL_URLS=url1,url2,url3,url4
-USE_CACHE=                            # "true" to skip live extraction
-BOOKING_AID=                          # optional Booking.com affiliate id
+Frontend:
 
-# Agentic payment (AP2 + x402) — Zhi Hao; all optional, mock by default
-USE_MOCK_PAYMENT=true                 # "false" → real provider (next round)
-X402_FACILITATOR_URL=                 # x402 verify+settle endpoint (CDP). Unused while mock
-PAYMENT_NETWORK=mock                  # "base-sepolia" testnet | "base" | "mock"
-AP2_MANDATE_SIGNING_KEY=              # AP2 Intent/Cart mandate signing key (placeholder)
-X402_PAYER_ADDRESS=                   # agent wallet for testnet USDC (placeholder)
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-# Deprecated (optional fallback only)
-DUFFEL_TEST_TOKEN=                    # if set, MUST contain "_test_"; absent → Duffel skipped
+Open:
 
-# Frontend (frontend/.env)
-NEXT_PUBLIC_MAPBOX_TOKEN=...          # Mapbox GL JS token
+```text
+http://localhost:3000
+```
+
+Required environment:
+
+```bash
+OPENAI_API_KEY=...
+APIFY_TOKEN=...
+NEXT_PUBLIC_MAPBOX_TOKEN=...
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
+
+## Demo Script
+
+1. Start backend on `8000` and frontend on `3000`.
+2. Open TripCanvas.
+3. Click **Demo Reels** or paste the test Reel URLs.
+4. For the fastest path, click **Backend Cache**.
+5. Show the map zoom, extracted places, hotel base, selected route leg, and right-side AI explanation.
+6. Click a non-selected extracted place to show that the map and rationale update.
+7. Approve the AP2 hotel mandate.
+8. Run the x402 hotel payment handoff.
+
+## Judging Alignment
+
+**AI-native product:** The product flow starts from unstructured social media, not a form full of known destinations. AI shapes the core UX, data model, decision flow, and operation loop.
+
+**Operational depth:** TripCanvas models the work a human travel planner would do: identify real places, check feasibility, choose a hotel base, sequence days, reason about rain and transit, and prepare payment.
+
+**Human-in-the-loop AI-assisted payment:** The project goes beyond itinerary generation by showing AP2 approval before x402 payment execution, making the agent useful for a constrained operational step without giving it unchecked payment control.
+
+**Transparency and trust:** The UI shows user-facing rationale, evidence, confidence, cache/live source state, and tradeoffs so the user can approve or redirect the agent.
+
+**Demo reliability:** The backend has committed cache artifacts and a `/demo-cache` endpoint so the hackathon demo remains fast even when live scraping or long-running agent research is slow.
+
+**Technical integration:** The system combines OpenAI Agents SDK, FastAPI SSE, Apify, Mapbox GL JS, Open-Meteo, AP2-style human approval mandates, and x402-shaped payment settlement behind typed frontend contracts.
+
+## Verification
+
+Frontend checks:
+
+```bash
+cd frontend
+npm run test:unit
+npm run typecheck
+npm run build
+```
+
+Backend checks:
+
+```bash
+uv run pytest
+```
+
+The latest frontend implementation was verified with unit tests, TypeScript, production build, and browser checks against the backend cache flow.

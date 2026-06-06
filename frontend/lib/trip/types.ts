@@ -109,6 +109,8 @@ export type TripDayStop = {
   isAnchor: boolean; // a reel source place or the hotel (vs a supporting find)
   placeName?: string; // set iff this stop is a source place
   description?: string;
+  lat?: number;
+  lng?: number;
 };
 
 export type TripDay = {

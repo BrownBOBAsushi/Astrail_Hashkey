@@ -50,6 +50,7 @@ import {
   requestHotelBookingMandate,
   submitHotelBooking,
 } from "@/lib/trip/hotel-booking";
+import { buildPaymentExplorerLinks } from "@/lib/trip/payment-ui";
 import { readPublicMapboxToken } from "@/lib/trip/env";
 import type { DayFilter, TripDay, TripExperience, TripHotelBase, TripPlace } from "@/lib/trip/types";
 
@@ -93,13 +94,6 @@ type BookingFlowState = {
   bookingResponse: HotelBookingResponse | null;
   errorMessage: string | null;
 };
-
-const PRIORITY_THEMES = [
-  { id: "food", label: "Food" },
-  { id: "transit", label: "Transit" },
-  { id: "value", label: "Value" },
-  { id: "weather", label: "Weather" },
-] as const;
 
 const DEMO_AP2_TRIP_ID = "tc-demo-osaka-001";
 
@@ -864,11 +858,11 @@ export function TripGenerationShell() {
         }
 
         setExtractResponse(extracted);
-      setCacheNotice(extracted.source === "cache" ? "Cache fallback" : null);
-      setProvisionalTrip(provisional);
-      setSelectedPlaceId(provisional.places[0]?.id ?? null);
-      setRoutePreviewPlaceId(provisional.places[0]?.id ?? null);
-      setRightPanelTab("agent-run");
+        setCacheNotice(extracted.source === "cache" ? "Cache fallback" : null);
+        setProvisionalTrip(provisional);
+        setSelectedPlaceId(provisional.places[0]?.id ?? null);
+        setRoutePreviewPlaceId(provisional.places[0]?.id ?? null);
+        setRightPanelTab("agent-run");
         pushLog(
           "Places mapped",
           `${provisional.places.length} geocoded places are ready for the map.`,
@@ -961,7 +955,7 @@ export function TripGenerationShell() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#081016] text-white">
+    <main className="relative h-screen w-full max-w-full overflow-hidden bg-[#081016] text-white">
       <TripMap
         mode={mapMode}
         mapboxToken={mapboxToken}
@@ -978,7 +972,7 @@ export function TripGenerationShell() {
       {cacheNotice ? <SourceBadge label={cacheNotice} /> : null}
       <section
         className={[
-          "absolute left-3 top-3 z-10 max-h-[calc(100vh-1rem)] w-[calc(100vw-1.5rem)] max-w-[390px] overflow-y-auto overflow-x-hidden pb-3 pr-1 transition duration-500 md:left-4 md:top-4 lg:max-w-[430px] 2xl:max-w-[460px]",
+          "absolute left-3 top-3 z-10 max-h-[calc(100vh-1rem)] w-[calc(100vw-1.5rem)] max-w-[360px] overflow-y-auto overflow-x-hidden pb-3 pr-1 transition duration-500 md:left-4 md:top-4 lg:max-w-[380px] 2xl:max-w-[400px]",
           status === "zooming_to_destination"
             ? "pointer-events-none -translate-y-3 opacity-0"
             : "opacity-100",
@@ -1103,8 +1097,6 @@ export function TripGenerationShell() {
       <SelectedPlaceCard
         place={selectedPlace}
         days={activeTrip.days}
-        locked={selectedPlace ? lockedPlaceIds.has(selectedPlace.id) : false}
-        onToggleLock={handleToggleSelectedPlaceLock}
         onViewIntel={handleViewIntel}
       />
       <BottomPlaceRail
@@ -1380,10 +1372,10 @@ function formatHotelPreferenceSignal(hotelPreferences: HotelPreferencePayload) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
         {label}
       </span>
-      <div className="mt-2">{children}</div>
+      <div className="mt-1.5">{children}</div>
     </label>
   );
 }
@@ -1398,13 +1390,13 @@ function GenerationTimeline({
   const steps = getStageSteps(status, hasPlaces);
 
   return (
-    <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/72 p-3 shadow-2xl shadow-black/30 backdrop-blur-xl">
-      <div className="grid grid-cols-5 gap-1.5 lg:gap-2">
+    <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/72 p-2.5 shadow-2xl shadow-black/30 backdrop-blur-xl">
+      <div className="grid min-w-0 grid-cols-5 gap-1">
         {steps.map((step) => (
           <div
             key={step.key}
             className={[
-              "min-w-0 rounded-lg border px-2 py-2",
+              "min-w-0 overflow-hidden rounded-lg border px-1.5 py-2",
               step.done
                 ? "border-teal-200/30 bg-teal-300/12 text-teal-100"
                 : step.active
@@ -1412,7 +1404,7 @@ function GenerationTimeline({
                   : "border-white/10 bg-white/6 text-slate-400",
             ].join(" ")}
           >
-            <div className="flex min-w-0 items-center gap-1.5">
+            <div className="flex min-w-0 items-center justify-center gap-1">
               <span
                 className={[
                   "h-2 w-2 shrink-0 rounded-full",
@@ -1423,11 +1415,11 @@ function GenerationTimeline({
                       : "bg-slate-600",
                 ].join(" ")}
               />
-              <p className="min-w-0 truncate text-[9px] font-black uppercase tracking-[0.04em] lg:text-[10px]">
+              <p className="min-w-0 truncate text-[8px] font-black uppercase tracking-[0] lg:text-[9px]">
                 {getCompactStageLabel(step.key)}
               </p>
             </div>
-            <p className="mt-1.5 text-[10px] font-semibold leading-3 text-current/75 lg:text-[11px] lg:leading-4">
+            <p className="mt-1 hidden text-center text-[10px] font-semibold leading-3 text-current/75 xl:block">
               {step.detail}
             </p>
           </div>
@@ -1460,11 +1452,6 @@ function AgentDecisionRail({
   hotelBase,
   steering,
   bookingState,
-  onToggleHotelBaseLock,
-  onTogglePlaceLock,
-  onTogglePriorityTheme,
-  onRequestRegenerateDay,
-  onAddSteeringNote,
   onRequestBookingMandate,
   onConfirmHotelBooking,
 }: {
@@ -1486,8 +1473,6 @@ function AgentDecisionRail({
   onRequestBookingMandate?: () => void;
   onConfirmHotelBooking?: () => void;
 }) {
-  const [draftNote, setDraftNote] = useState("");
-
   if (status === "idle_globe") {
     return null;
   }
@@ -1495,19 +1480,6 @@ function AgentDecisionRail({
   const selectedDay = selectedPlace
     ? days.find((day) => day.day === selectedPlace.day) ?? null
     : null;
-  const selectedPlaceLocked = selectedPlace ? steering.lockedPlaceIds.has(selectedPlace.id) : false;
-  const hasSteering =
-    steering.lockedHotelBase ||
-    steering.lockedPlaceIds.size > 0 ||
-    steering.priorityThemes.length > 0 ||
-    steering.regenerateDay !== null ||
-    steering.steeringNotes.length > 0;
-
-  const handleSubmitNote = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onAddSteeringNote(draftNote);
-    setDraftNote("");
-  };
 
   return (
     <div>
@@ -1564,101 +1536,6 @@ function AgentDecisionRail({
           onConfirmHotelBooking={onConfirmHotelBooking}
         />
       ) : null}
-
-      <div className="mt-3 space-y-2 rounded-lg border border-white/10 bg-white/6 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">
-            Steering
-          </p>
-          <span className="text-[9px] font-black uppercase tracking-[0.12em] text-amber-100">
-            Next run
-          </span>
-        </div>
-
-        <div className="grid gap-2">
-          <SteeringButton
-            active={steering.lockedHotelBase}
-            disabled={!hotelBase}
-            onClick={onToggleHotelBaseLock}
-          >
-            Lock hotel base
-          </SteeringButton>
-          {selectedPlace ? (
-            <SteeringButton
-              active={selectedPlaceLocked}
-              onClick={() => onTogglePlaceLock(selectedPlace.id)}
-            >
-              {selectedPlaceLocked ? "Stop locked" : "Lock selected stop"}
-            </SteeringButton>
-          ) : null}
-          {selectedPlace ? (
-            <SteeringButton
-              active={steering.regenerateDay === selectedPlace.day}
-              onClick={() => onRequestRegenerateDay(selectedPlace.day)}
-            >
-              Regenerate Day {selectedPlace.day}
-            </SteeringButton>
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {PRIORITY_THEMES.map((theme) => (
-            <button
-              key={theme.id}
-              type="button"
-              onClick={() => onTogglePriorityTheme(theme.id)}
-              className={[
-                "rounded-full border px-2.5 py-1.5 text-[11px] font-black transition",
-                steering.priorityThemes.includes(theme.id)
-                  ? "border-amber-200/55 bg-amber-200/18 text-amber-100"
-                  : "border-white/10 bg-white/8 text-slate-200 hover:bg-white/12",
-              ].join(" ")}
-            >
-              Prioritize {theme.label}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmitNote}>
-          <label className="block">
-            <span className="sr-only">Steering note</span>
-            <textarea
-              value={draftNote}
-              onChange={(event) => setDraftNote(event.target.value)}
-              rows={2}
-              placeholder="Tell the agent what to prioritize next..."
-              className="min-h-[48px] w-full resize-none rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold leading-5 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-200/60"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={!draftNote.trim()}
-            className="mt-2 h-8 w-full rounded-lg border border-amber-200/35 bg-amber-200/14 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-amber-100 transition hover:bg-amber-200/22 disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            Save steering note
-          </button>
-        </form>
-
-        {hasSteering ? (
-          <div className="space-y-1.5 text-xs font-semibold leading-4 text-slate-300">
-            {steering.lockedHotelBase ? <SteeringStateLine>Hotel base locked</SteeringStateLine> : null}
-            {steering.lockedPlaceIds.size > 0 ? (
-              <SteeringStateLine>{steering.lockedPlaceIds.size} stop locked</SteeringStateLine>
-            ) : null}
-            {steering.priorityThemes.length > 0 ? (
-              <SteeringStateLine>
-                Priorities: {steering.priorityThemes.map(formatPriorityTheme).join(", ")}
-              </SteeringStateLine>
-            ) : null}
-            {steering.regenerateDay !== null ? (
-              <SteeringStateLine>Regenerate Day {steering.regenerateDay}</SteeringStateLine>
-            ) : null}
-            {steering.steeringNotes.slice(-2).map((note) => (
-              <SteeringStateLine key={note}>{note}</SteeringStateLine>
-            ))}
-          </div>
-        ) : null}
-      </div>
 
       <div className="mt-3 space-y-2">
         <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">
@@ -1742,6 +1619,11 @@ function PlanApprovalCard({
   );
   const paymentLabel = formatPaymentLabel(payment);
   const txHash = getPaymentTxHash(payment);
+  const confirmed = bookingState.status === "confirmed" && Boolean(receipt);
+  const explorerLinks = buildPaymentExplorerLinks({
+    confirmed,
+    payment,
+  });
   const errorMessage = bookingState.errorMessage;
   const isSigning = bookingState.status === "mandate_signing";
   const isSubmitting = bookingState.status === "booking_submitting";
@@ -1751,14 +1633,25 @@ function PlanApprovalCard({
     Boolean(onConfirmHotelBooking) && bookingState.status === "mandate_ready";
 
   return (
-    <section className="mt-3 rounded-lg border border-amber-200/30 bg-amber-200/12 p-3">
+    <section
+      data-testid="agentic-payment-card"
+      className={[
+        "mt-3 rounded-xl border p-3 shadow-xl shadow-black/20",
+        confirmed
+          ? "border-teal-100/50 bg-teal-300/14"
+          : "border-amber-200/40 bg-amber-200/14",
+      ].join(" ")}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-100">
-            Human approval
+            Agentic booking payment
           </p>
+          <h3 className="mt-1 text-base font-black leading-5 text-white">
+            {confirmed ? "Hotel payment completed" : "Approve before the agent pays"}
+          </h3>
           <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
-            Confirm the hotel mandate before the agent runs x402 payment.
+            AP2 captures your approval, then the hotel agent runs the x402 payment loop.
           </p>
         </div>
         <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-amber-100">
@@ -1766,9 +1659,7 @@ function PlanApprovalCard({
         </span>
       </div>
 
-      <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/45 px-3 py-2 text-[11px] font-semibold leading-4 text-slate-300">
-        Hotel fulfillment is mock-only. The x402 leg may move testnet USDC when real settlement mode is enabled.
-      </div>
+      <BookingFlowStepper status={bookingState.status} />
 
       {bookingState.status !== "idle" ? (
         <div className="mt-2 grid gap-2">
@@ -1785,11 +1676,18 @@ function PlanApprovalCard({
         </div>
       ) : null}
 
-      {receipt?.receipt_note ? (
-        <p className="mt-2 rounded-lg border border-teal-200/25 bg-teal-300/10 px-3 py-2 text-xs font-semibold leading-4 text-teal-50">
-          {receipt.receipt_note}
-        </p>
-      ) : null}
+      {confirmed ? (
+        <div className="mt-2 rounded-lg border border-teal-100/35 bg-teal-300/12 px-3 py-2">
+          <p className="text-xs font-black text-teal-50">
+            Booking receipt issued. The payment rail is ready for Base Sepolia verification.
+          </p>
+          <PaymentExplorerButtons links={explorerLinks} />
+        </div>
+      ) : (
+        <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/45 px-3 py-2 text-[11px] font-semibold leading-4 text-slate-300">
+          AP2 gates the hotel-booking action; x402 handles the payment step on the selected rail.
+        </div>
+      )}
 
       {errorMessage ? (
         <p className="mt-2 rounded-lg border border-red-300/30 bg-red-400/12 px-3 py-2 text-xs font-semibold leading-4 text-red-100">
@@ -1804,7 +1702,7 @@ function PlanApprovalCard({
           disabled={!canConfirmBooking}
           className="mt-2 h-8 w-full rounded-lg border border-teal-100/35 bg-teal-200 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950 transition hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Submit booking
+          Run x402 hotel payment
         </button>
       ) : bookingState.status === "confirmed" ? (
         <button
@@ -1812,7 +1710,7 @@ function PlanApprovalCard({
           disabled
           className="mt-2 h-8 w-full rounded-lg border border-teal-100/35 bg-teal-200 px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950 opacity-70"
         >
-          Booking confirmed
+          Payment complete
         </button>
       ) : (
         <button
@@ -1824,11 +1722,78 @@ function PlanApprovalCard({
           {isSigning
             ? "Signing AP2 mandate"
             : isSubmitting
-              ? "Submitting booking"
-              : "Confirm Hotel Booking"}
+              ? "Agent paying with x402"
+              : "Approve AP2 mandate"}
         </button>
       )}
     </section>
+  );
+}
+
+function BookingFlowStepper({ status }: { status: BookingFlowStatus }) {
+  const steps = [
+    {
+      key: "approve",
+      label: "Approve",
+      done: !["idle", "mandate_signing", "failed", "rejected"].includes(status),
+      active: status === "idle" || status === "mandate_signing",
+    },
+    {
+      key: "pay",
+      label: "x402 Pay",
+      done: status === "confirmed",
+      active: status === "mandate_ready" || status === "booking_submitting",
+    },
+    {
+      key: "receipt",
+      label: "Receipt",
+      done: status === "confirmed",
+      active: status === "confirmed",
+    },
+  ];
+
+  return (
+    <ol className="mt-3 grid grid-cols-3 gap-1.5">
+      {steps.map((step) => (
+        <li
+          key={step.key}
+          className={[
+            "rounded-lg border px-2 py-1.5 text-center",
+            step.done
+              ? "border-teal-100/35 bg-teal-300/14 text-teal-50"
+              : step.active
+                ? "border-amber-100/40 bg-amber-200/16 text-amber-50"
+                : "border-white/10 bg-white/6 text-slate-400",
+          ].join(" ")}
+        >
+          <span className="text-[9px] font-black uppercase tracking-[0.08em]">
+            {step.label}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function PaymentExplorerButtons({ links }: { links: ReturnType<typeof buildPaymentExplorerLinks> }) {
+  if (links.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 grid gap-1.5">
+      {links.map((link) => (
+        <a
+          key={`${link.kind}-${link.url}`}
+          href={link.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-8 items-center justify-center rounded-lg border border-teal-100/35 bg-teal-200 px-3 text-center text-[11px] font-black uppercase tracking-[0.1em] text-slate-950 transition hover:bg-teal-100"
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -1848,42 +1813,6 @@ function BookingDetailRow({
       </p>
       <p className="mt-1 truncate text-xs font-black text-slate-100">{value}</p>
     </div>
-  );
-}
-
-function SteeringButton({
-  active,
-  disabled,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={[
-        "h-8 rounded-lg border px-3 text-[11px] font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-40",
-        active
-          ? "border-teal-200/45 bg-teal-300/14 text-teal-100"
-          : "border-white/10 bg-white/8 text-slate-200 hover:bg-white/12",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SteeringStateLine({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-lg border border-white/8 bg-slate-950/38 px-3 py-2">
-      {children}
-    </p>
   );
 }
 
@@ -2023,7 +1952,7 @@ function buildMandateLogDetail(response: AP2MandateResponse) {
 }
 
 function buildBookingLogDetail(response: HotelBookingResponse) {
-  const bookingId = response.receipt?.booking_id ?? "mock hotel booking";
+  const bookingId = response.receipt?.booking_id ?? "hotel booking";
   const paymentStatus = response.payment?.status ?? response.receipt?.payment?.status;
   const statusText = paymentStatus ? ` Payment ${paymentStatus}.` : "";
 

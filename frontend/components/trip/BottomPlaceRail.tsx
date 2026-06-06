@@ -33,7 +33,7 @@ export function BottomPlaceRail({
   return (
     <nav
       aria-label="Trip itinerary timeline"
-      className="absolute bottom-3 left-3 right-3 z-10 flex gap-2 overflow-x-auto pb-1 md:left-4 md:right-4 lg:left-[370px] lg:right-[382px] xl:left-[390px] xl:right-[410px]"
+      className="absolute bottom-3 left-3 right-3 z-10 flex gap-2 overflow-x-auto overflow-y-hidden pb-1 md:left-4 md:right-4 lg:left-[360px] lg:right-[370px] xl:left-[382px] xl:right-[398px]"
     >
       {timeline.map((day) => (
         <DayTimelineCard
@@ -62,7 +62,7 @@ function DayTimelineCard({
   return (
     <article
       className={[
-        "min-w-[268px] max-w-[268px] rounded-xl border p-2.5 text-left shadow-2xl shadow-black/25 backdrop-blur-xl transition md:min-w-[296px] md:max-w-[296px]",
+        "min-w-[276px] max-w-[276px] rounded-xl border p-2.5 text-left shadow-2xl shadow-black/25 backdrop-blur-xl transition md:min-w-[304px] md:max-w-[304px]",
         day.selected
           ? "border-amber-200 bg-[#182432]/92"
           : "border-white/10 bg-[#101821]/78",
@@ -75,7 +75,7 @@ function DayTimelineCard({
       >
         <span className="min-w-0">
           <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-amber-200">
-            Day {day.day}
+            Route sequence / Day {day.day}
           </span>
           <span className="mt-0.5 block truncate text-sm font-black leading-5 text-white">
             {day.title}
@@ -93,16 +93,23 @@ function DayTimelineCard({
       ) : null}
 
       <ol className="mt-2 space-y-1">
-        {day.stops.slice(0, 3).map((stop, index) => (
+        {day.stops.map((stop, index) => (
           <li key={stop.id}>
             <button
               type="button"
-              onClick={() => onSelectPlace(stop.id)}
+              disabled={!stop.selectable || !stop.placeId}
+              onClick={() => {
+                if (stop.placeId) {
+                  onSelectPlace(stop.placeId);
+                }
+              }}
               className={[
-                "grid h-8 w-full grid-cols-[22px_1fr_auto] items-center gap-2 rounded-lg border px-2 text-left transition",
+                "grid min-h-9 w-full grid-cols-[22px_3.8rem_1fr_auto] items-center gap-2 rounded-lg border px-2 py-1 text-left transition disabled:cursor-default",
                 stop.selected
                   ? "border-amber-200/55 bg-amber-200/14"
-                  : "border-white/8 bg-white/6 hover:bg-white/10",
+                  : stop.selectable
+                    ? "border-white/8 bg-white/6 hover:bg-white/10"
+                    : "border-cyan-100/12 bg-cyan-300/8",
               ].join(" ")}
             >
               <span
@@ -115,11 +122,16 @@ function DayTimelineCard({
               >
                 {index + 1}
               </span>
+              <span className="text-[9px] font-black uppercase tracking-[0.08em] text-teal-100/80">
+                {stop.timeOfDay ?? "stop"}
+              </span>
               <span className="min-w-0 truncate text-xs font-black text-white">
                 {stop.name}
               </span>
               <span className="flex shrink-0 items-center gap-1">
-                {lockedPlaceIds?.has(stop.id) ? <StatusDot title="Locked" /> : null}
+                {stop.placeId && lockedPlaceIds?.has(stop.placeId) ? (
+                  <StatusDot title="Locked" />
+                ) : null}
                 <span className="rounded-full border border-white/10 bg-white/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-slate-200">
                   {getCategoryGlyph(stop.category)}
                 </span>
@@ -128,12 +140,6 @@ function DayTimelineCard({
           </li>
         ))}
       </ol>
-
-      {day.stops.length > 3 ? (
-        <p className="mt-1.5 text-[10px] font-bold text-slate-400">
-          +{day.stops.length - 3} more mapped stops
-        </p>
-      ) : null}
     </article>
   );
 }

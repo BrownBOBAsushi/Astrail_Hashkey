@@ -357,6 +357,8 @@ function normalizeStops(rawStops: unknown): TripDayStop[] {
 
       const placeName = readString(stop.place_name ?? stop.placeName);
       const description = readString(stop.description);
+      const lat = readFiniteNumber(stop.lat);
+      const lng = readFiniteNumber(stop.lng);
 
       return {
         timeOfDay,
@@ -365,6 +367,7 @@ function normalizeStops(rawStops: unknown): TripDayStop[] {
         isAnchor: Boolean(placeName) || category === "hotel",
         ...(placeName ? { placeName } : {}),
         ...(description ? { description } : {}),
+        ...(lat !== null && lng !== null ? { lat, lng } : {}),
       };
     })
     .filter((stop): stop is TripDayStop => stop !== null);

@@ -127,11 +127,16 @@ export function TripCanvasShell({
   }, []);
 
   const handleSelectPlace = useCallback((placeId: string) => {
+    const place = trip.places.find((candidate) => candidate.id === placeId) ?? null;
+    if (place) {
+      setSelectedDay(place.day);
+      setActiveCategory("all");
+    }
     setSelectedPlaceId(placeId);
     setRoutePreviewPlaceId(placeId);
     setMobileIntelOpen(false);
     setRightPanelTab("place-intel");
-  }, []);
+  }, [trip.places]);
 
   const handleViewIntel = useCallback(() => {
     setRightPanelTab("place-intel");
@@ -170,7 +175,7 @@ export function TripCanvasShell({
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#081016] text-white">
+    <main className="relative h-screen w-full max-w-full overflow-hidden bg-[#081016] text-white">
       <TripMap
         mapboxToken={mapboxToken}
         center={mapCenter}
@@ -179,6 +184,7 @@ export function TripCanvasShell({
         selectedDay={selectedDay}
         selectedRouteDay={selectedRouteDay}
         places={visiblePlaces}
+        routePlaces={trip.places}
         selectedPlace={selectedPlace}
         hotelBase={activeHotelBase}
         onSelectPlace={handleSelectPlace}
@@ -192,11 +198,13 @@ export function TripCanvasShell({
         trip={trip}
         selectedDay={selectedDay}
         activeCategory={activeCategory}
+        selectedPlaceId={selectedPlaceId}
         categories={categories}
         visiblePlaceCount={visiblePlaces.length}
         hotelBase={activeHotelBase}
         onSelectDay={handleSelectDay}
         onSelectCategory={handleSelectCategory}
+        onSelectPlace={handleSelectPlace}
       />
       <RightTripPanel
         activeTab={rightPanelTab}
@@ -216,13 +224,11 @@ export function TripCanvasShell({
       <SelectedPlaceCard
         place={selectedPlace}
         days={trip.days}
-        locked={selectedPlace ? lockedPlaceIds?.has(selectedPlace.id) ?? false : false}
-        onToggleLock={onTogglePlaceLock}
         onViewIntel={handleViewIntel}
       />
       <BottomPlaceRail
         days={trip.days}
-        places={visiblePlaces}
+        places={trip.places}
         selectedPlaceId={selectedPlaceId}
         lockedPlaceIds={lockedPlaceIds}
         onSelectPlace={handleSelectPlace}
