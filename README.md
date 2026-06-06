@@ -4,12 +4,12 @@ Team TripCanvas submission for the **Sea x OpenAI Regional Codex Hackathon - Sin
 
 Track: **(2) AI-Native Products & Operations**
 
-TripCanvas is an AI-native travel planner that turns saved Instagram Reels into a mapped, explainable, bookable trip plan. Instead of treating AI as a chat box beside a travel app, TripCanvas makes the AI workflow the operating layer: it extracts places, researches tradeoffs, chooses a hotel base, sequences the itinerary, explains why each stop was chosen, and hands off to a human-approved AI-assisted AP2 + x402 hotel-payment flow.
+TripCanvas is an AI-native travel planner that turns saved travel inspiration and personal requirements into a mapped, explainable, bookable trip plan. Instead of treating AI as a chat box beside a travel app, TripCanvas makes the AI workflow the operating layer: it extracts places from Instagram Reels, weighs them against dates, budget, origin, and preferences, researches tradeoffs, chooses a hotel base, sequences the itinerary, explains why each stop was chosen, and hands off to a human-approved AI-assisted AP2 + x402 hotel-payment flow.
 
 ## Demo Flow
 
 1. Paste 3-4 Instagram Reel URLs, dates, budget, origin city, and trip preferences.
-2. Backend agents extract real places from messy Reel content and geocode them.
+2. Backend agents extract real places from messy Reel content, geocode them, and weigh them against the traveler's constraints.
 3. The frontend immediately moves from a Mapbox globe into the destination map.
 4. Agents research places, weather, hotel-base tradeoffs, and itinerary feasibility.
 5. TripCanvas renders the plan as a tilted Mapbox 3D map with pins, hotel base, day route segments, and itinerary cards.
@@ -26,7 +26,7 @@ For demo reliability, the UI also includes:
 
 TripCanvas is designed around AI-assisted operations, not AI autocomplete.
 
-- **Messy input becomes structured action:** saved Reels are converted into real mapped places, hotel decisions, and a day-by-day itinerary.
+- **Messy input becomes structured action:** saved Reels, dates, budget, origin, and preferences are converted into real mapped places, hotel decisions, and a day-by-day itinerary.
 - **The agent shows its work at product level:** users see confidence, evidence, source state, stage progress, hotel-base reasoning, weather strategy, and route tradeoffs without exposing hidden chain-of-thought.
 - **The map is the planning surface:** the user does not read a static itinerary first; they inspect the agent's decisions spatially through a 3D map, selected-place rationale, and per-day route legs.
 - **Operations are resilient:** live extraction/planning can fall back to committed cache data so the demo remains fast and dependable.
@@ -64,7 +64,7 @@ The frontend is a Next.js App Router app in `frontend/`.
 Implemented demo surface:
 
 - Mapbox GL JS 3D globe as the first screen.
-- Reel URL input with dates, budget, origin city, and preferences.
+- Reel URL and preference input with dates, budget, origin city, and free-text travel requirements.
 - `Demo Reels` and `Backend Cache` buttons for fast hackathon demos.
 - Generation timeline for extract, map grounding, hotel base, itinerary planning, and approval.
 - Full-screen tilted Mapbox 3D map with extracted-place pins.
@@ -115,7 +115,7 @@ The backend keeps the demo dependable by separating live agent work from replaya
 ## Architecture
 
 ```text
-Instagram Reels
+Instagram Reels + traveler preferences
   -> Apify scraper
   -> OpenAI extraction agents
   -> real places + confidence + evidence
