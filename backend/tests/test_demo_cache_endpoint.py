@@ -64,6 +64,29 @@ class DemoCacheHappyPathTests(unittest.TestCase):
         # model_dump(mode="json") must round-trip cleanly to the frontend.
         json.dumps(self.resp.model_dump(mode="json"))
 
+    def test_itinerary_days_carry_three_stops(self) -> None:
+        # Structured per-day stops must flow through /demo-cache to the frontend.
+        for day in self.resp.itinerary["days"]:
+            stops = day["stops"]
+            self.assertEqual(len(stops), 3, day["date"])
+            times = [s["time_of_day"] for s in stops]
+            self.assertEqual(len(set(times)), 3, times)
+            for stop in stops:
+                self.assertTrue(stop["name"])
+                self.assertIn("category", stop)
+
+    def test_source_places_anchored_in_stops(self) -> None:
+        # Every source place appears as an anchor stop exactly once across days.
+        from collections import Counter
+
+        anchors = Counter(
+            s["place_name"]
+            for day in self.resp.itinerary["days"]
+            for s in day["stops"]
+            if s.get("place_name")
+        )
+        self.assertEqual(anchors, Counter(self.resp.itinerary["source_places"]))
+
 
 class DemoCache503Tests(unittest.TestCase):
     """Each missing/invalid cache must surface a clean 503 (never a 500 leak)."""
