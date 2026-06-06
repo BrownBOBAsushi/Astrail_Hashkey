@@ -185,4 +185,22 @@ export type HotelOption = {
   is_best: boolean;
 };
 
+// One time-blocked stop within an itinerary day (from spike_planner.DayStop).
+// Anchors carry place_name (a source place) or category "hotel"; supporting
+// stops have place_name null. Additive — legacy day payloads omit `stops`.
+export type DayStop = {
+  time_of_day: "morning" | "afternoon" | "evening";
+  name: string;
+  category:
+    | "attraction"
+    | "restaurant"
+    | "cafe"
+    | "hotel"
+    | "transport"
+    | "shopping"
+    | "other";
+  place_name?: string | null;
+  description?: string;
+};
+
 export type BackendTripPayload = unknown;
