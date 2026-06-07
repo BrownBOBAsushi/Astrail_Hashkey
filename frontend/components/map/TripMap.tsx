@@ -2,11 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
-  AnyLayer,
-  ExpressionSpecification,
   GeoJSONSource,
   Map,
-  MapEventOf,
   MapLayerMouseEvent,
 } from "mapbox-gl";
 import { coerceSafeMapCenter, isValidLngLatValue } from "@/lib/trip/geo";
@@ -14,14 +11,43 @@ import {
   buildDayRoutePlans,
   fetchMapboxDirectionsGeometry,
   findRouteLegForPlace,
-  type DayRouteLeg,
-  type DayRoutePlan,
 } from "@/lib/trip/day-route";
+import {
+  buildHotelHubFeatureCollection,
+  buildPlaceFeatureCollection,
+  buildRouteFeatureCollection,
+  buildRouteStopFeatureCollection,
+  deriveHotelHub,
+  type HotelHubFeatureCollection,
+  type PlaceFeatureCollection,
+  type RouteFeatureCollection,
+  type RouteStopFeatureCollection,
+} from "@/lib/trip/map-feature-collections";
+import {
+  HOTEL_HUB_SOURCE_ID,
+  PLACE_CLUSTER_HITBOX_LAYER_ID,
+  PLACE_HITBOX_LAYER_ID,
+  PLACE_SELECTED_PULSE_LAYER_ID,
+  PLACE_SOURCE_ID,
+  ROUTE_ACTIVE_DASH_LAYER_ID,
+  ROUTE_DASH_SEQUENCE,
+  ROUTE_SOURCE_ID,
+  ROUTE_STOP_SOURCE_ID,
+  addReliable3DBuildingsLayer,
+  ensureHotelHubLayers,
+  ensurePlaceLayers,
+  ensureRouteLayers,
+  ensureRouteStopLayers,
+} from "@/lib/trip/map-layers";
 import {
   getMapCalloutPosition,
   type MapCalloutPosition,
 } from "@/lib/trip/map-overlay";
-import { buildActiveAwareLineWidth } from "@/lib/trip/map-style";
+import {
+  getUnknownErrorMessage,
+  redactMapboxAccessToken,
+  registerMapRuntimeGuards,
+} from "@/lib/trip/map-runtime";
 import type { DayFilter, TripDay, TripHotelBase, TripPlace } from "@/lib/trip/types";
 
 export type TripMapMode = "globe" | "extracting" | "trip";
@@ -45,50 +71,6 @@ type TripMapProps = {
   onRegionFocusComplete?: () => void;
 };
 
-type RouteFeatureProperties = {
-  day: number;
-  legIndex: number;
-  fromName: string;
-  toName: string;
-  active: boolean;
-};
-type RouteFeatureCollection = GeoJSON.FeatureCollection<
-  GeoJSON.LineString,
-  RouteFeatureProperties
->;
-type PlaceFeatureProperties = {
-  placeId: string;
-  name: string;
-  category: TripPlace["category"];
-  day: number;
-  glyph: string;
-  selected: boolean;
-  muted: boolean;
-};
-type PlaceFeatureCollection = GeoJSON.FeatureCollection<
-  GeoJSON.Point,
-  PlaceFeatureProperties
->;
-type HotelHubFeatureProperties = {
-  name: string;
-  glyph: string;
-  kind: "hotel" | "base";
-};
-type HotelHubFeatureCollection = GeoJSON.FeatureCollection<
-  GeoJSON.Point,
-  HotelHubFeatureProperties
->;
-type RouteStopFeatureProperties = {
-  name: string;
-  day: number;
-  sequence: number;
-  active: boolean;
-  kind: string;
-};
-type RouteStopFeatureCollection = GeoJSON.FeatureCollection<
-  GeoJSON.Point,
-  RouteStopFeatureProperties
->;
 type SelectedPlaceCalloutLayout = MapCalloutPosition & {
   width: number;
   height: number;
@@ -119,63 +101,6 @@ const STANDARD_ARCHITECTURAL_BASEMAP_CONFIG = {
   showPedestrianRoads: true,
 };
 const USE_SAFE_3D_FALLBACK = false;
-const RELIABLE_BUILDINGS_LAYER_ID = "tripcanvas-reliable-3d-buildings";
-const ROUTE_SOURCE_ID = "tripcanvas-routes";
-const ROUTE_CASING_LAYER_ID = "tripcanvas-routes-casing";
-const ROUTE_UNDERLAY_LAYER_ID = "tripcanvas-routes-underlay";
-const ROUTE_ACTIVE_LAYER_ID = "tripcanvas-routes-active";
-const ROUTE_ACTIVE_DASH_LAYER_ID = "tripcanvas-routes-active-dash";
-const ROUTE_STOP_SOURCE_ID = "tripcanvas-route-stops";
-const ROUTE_STOP_HALO_LAYER_ID = "tripcanvas-route-stop-halos";
-const ROUTE_STOP_NUMBER_LAYER_ID = "tripcanvas-route-stop-numbers";
-const ROUTE_STOP_LABEL_LAYER_ID = "tripcanvas-route-stop-labels";
-const PLACE_SOURCE_ID = "tripcanvas-places";
-const PLACE_CLUSTER_LAYER_ID = "tripcanvas-place-clusters";
-const PLACE_CLUSTER_COUNT_LAYER_ID = "tripcanvas-place-cluster-counts";
-const PLACE_CLUSTER_HITBOX_LAYER_ID = "tripcanvas-place-cluster-hitbox";
-const PLACE_SELECTED_PULSE_LAYER_ID = "tripcanvas-place-selected-pulse";
-const PLACE_HALO_LAYER_ID = "tripcanvas-place-halos";
-const PLACE_DOT_LAYER_ID = "tripcanvas-place-dots";
-const PLACE_GLYPH_LAYER_ID = "tripcanvas-place-glyphs";
-const PLACE_HITBOX_LAYER_ID = "tripcanvas-place-hitbox";
-const HOTEL_HUB_SOURCE_ID = "tripcanvas-hotel-hub";
-const HOTEL_HUB_HALO_LAYER_ID = "tripcanvas-hotel-hub-halo";
-const HOTEL_HUB_DOT_LAYER_ID = "tripcanvas-hotel-hub-dot";
-const HOTEL_HUB_RING_LAYER_ID = "tripcanvas-hotel-hub-ring";
-const HOTEL_HUB_GLYPH_LAYER_ID = "tripcanvas-hotel-hub-glyph";
-const HOTEL_HUB_LABEL_LAYER_ID = "tripcanvas-hotel-hub-label";
-const EMPTY_ROUTE_COLLECTION: RouteFeatureCollection = {
-  type: "FeatureCollection",
-  features: [],
-};
-const EMPTY_PLACE_COLLECTION: PlaceFeatureCollection = {
-  type: "FeatureCollection",
-  features: [],
-};
-const EMPTY_HOTEL_HUB_COLLECTION: HotelHubFeatureCollection = {
-  type: "FeatureCollection",
-  features: [],
-};
-const EMPTY_ROUTE_STOP_COLLECTION: RouteStopFeatureCollection = {
-  type: "FeatureCollection",
-  features: [],
-};
-const ROUTE_DASH_SEQUENCE: number[][] = [
-  [0, 4, 3],
-  [0.5, 4, 2.5],
-  [1, 4, 2],
-  [1.5, 4, 1.5],
-  [2, 4, 1],
-  [2.5, 4, 0.5],
-  [3, 4, 0],
-  [0, 0.5, 3, 3.5],
-  [0, 1, 3, 3],
-  [0, 1.5, 3, 2.5],
-  [0, 2, 3, 2],
-  [0, 2.5, 3, 1.5],
-  [0, 3, 3, 1],
-  [0, 3.5, 3, 0.5],
-];
 
 export function TripMap({
   mode = "trip",
@@ -231,15 +156,15 @@ export function TripMap({
   }, [routePlans, selectedPlace]);
   const routeCollection = useMemo(
     () =>
-      buildRouteFeatureCollection(
+      buildRouteFeatureCollection({
         days,
-        routeSourcePlaces,
+        places: routeSourcePlaces,
         selectedDay,
-        activeRouteDay,
+        selectedRouteDay: activeRouteDay,
         activeRouteLegId,
         hotelBase,
         directionsBySignature,
-      ),
+      }),
     [
       activeRouteDay,
       activeRouteLegId,
@@ -251,7 +176,7 @@ export function TripMap({
     ],
   );
   const routeStopCollection = useMemo(
-    () => buildRouteStopFeatureCollection(routePlans, selectedDay, activeRouteDay),
+    () => buildRouteStopFeatureCollection({ routePlans, selectedDay, activeRouteDay }),
     [activeRouteDay, routePlans, selectedDay],
   );
   const hotelHub = useMemo(
@@ -264,7 +189,7 @@ export function TripMap({
   );
   const hotelHubName = hotelHubCollection.features[0]?.properties?.name ?? null;
   const placeCollection = useMemo(
-    () => buildPlaceFeatureCollection(places, selectedPlace?.id ?? null),
+    () => buildPlaceFeatureCollection({ places, selectedPlaceId: selectedPlace?.id ?? null }),
     [places, selectedPlace?.id],
   );
   const hasActiveRoute = useMemo(
@@ -890,44 +815,6 @@ export function TripMap({
   );
 }
 
-function deriveHotelHub(hotelBase?: TripHotelBase) {
-  if (!hotelBase) {
-    return null;
-  }
-
-  const selectedHotel =
-    hotelBase.hotelCandidates.find((hotel) => hotel.id === hotelBase.selectedHotelId) ?? null;
-  if (
-    selectedHotel &&
-    typeof selectedHotel.lng === "number" &&
-    typeof selectedHotel.lat === "number" &&
-    isValidLngLat(selectedHotel.lng, selectedHotel.lat)
-  ) {
-    return {
-      name: selectedHotel.name || hotelBase.selectedHotelName,
-      lng: selectedHotel.lng,
-      lat: selectedHotel.lat,
-      kind: "hotel" as const,
-    };
-  }
-
-  const selectedBase =
-    hotelBase.baseAreas.find((base) => base.id === hotelBase.selectedBaseId) ?? null;
-  if (
-    selectedBase?.center &&
-    isValidLngLat(selectedBase.center.lng, selectedBase.center.lat)
-  ) {
-    return {
-      name: selectedBase.name || hotelBase.selectedBaseName,
-      lng: selectedBase.center.lng,
-      lat: selectedBase.center.lat,
-      kind: "base" as const,
-    };
-  }
-
-  return null;
-}
-
 function buildMapCalloutReason(place: TripPlace | null, day: TripDay | null) {
   if (!place) {
     return "";
@@ -973,82 +860,6 @@ function truncateMapText(value: string, maxLength: number) {
   return `${normalized.slice(0, Math.max(0, maxLength - 1)).trim()}...`;
 }
 
-function registerMapRuntimeGuards(map: Map) {
-  const handleMapError = (event: MapEventOf<"error">) => {
-    const message = redactMapboxAccessToken(getUnknownErrorMessage(event.error));
-
-    if (isExpectedMapboxRuntimeNoise(message)) {
-      return;
-    }
-
-    console.warn("[TripCanvas map]", message || "Mapbox emitted an error event.");
-  };
-
-  const handleWebGlContextLost = (event: MapEventOf<"webglcontextlost">) => {
-    event.originalEvent?.preventDefault();
-  };
-
-  const handleCanvasRuntimeEvent = (event: Event) => {
-    if (event.type === "webglcontextlost") {
-      event.preventDefault();
-    }
-
-    event.stopPropagation();
-  };
-
-  const canvas = map.getCanvas();
-  map.on("error", handleMapError);
-  map.on("webglcontextlost", handleWebGlContextLost);
-  canvas.addEventListener("error", handleCanvasRuntimeEvent, true);
-  canvas.addEventListener("webglcontextlost", handleCanvasRuntimeEvent, false);
-
-  return () => {
-    map.off("error", handleMapError);
-    map.off("webglcontextlost", handleWebGlContextLost);
-    canvas.removeEventListener("error", handleCanvasRuntimeEvent, true);
-    canvas.removeEventListener("webglcontextlost", handleCanvasRuntimeEvent, false);
-  };
-}
-
-function getUnknownErrorMessage(value: unknown) {
-  if (!value) {
-    return "";
-  }
-
-  if (value instanceof Error) {
-    return value.message;
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (typeof Event !== "undefined" && value instanceof Event) {
-    return `${value.type || "unknown"} event`;
-  }
-
-  if (typeof value === "object" && "message" in value) {
-    const message = (value as { message?: unknown }).message;
-    if (typeof message === "string") {
-      return message;
-    }
-  }
-
-  return String(value);
-}
-
-function redactMapboxAccessToken(message: string) {
-  return message.replace(/access_token=[^&\s)]+/g, "access_token=[redacted]");
-}
-
-function isExpectedMapboxRuntimeNoise(message: string) {
-  return [
-    "e.json.meshes is not iterable",
-    "Failed to evaluate expression",
-    "Cutoff is currently disabled on terrain",
-  ].some((pattern) => message.includes(pattern));
-}
-
 function applyAtmosphere(map: Map, mode: TripMapMode) {
   try {
     if (mode === "trip") {
@@ -1092,626 +903,6 @@ function getBasemapConfig(mode: TripMapMode) {
   };
 }
 
-function addReliable3DBuildingsLayer(map: Map) {
-  if (map.getLayer(RELIABLE_BUILDINGS_LAYER_ID)) {
-    return;
-  }
-
-  const hasCompositeSource = Boolean(map.getStyle().sources?.composite);
-  if (!hasCompositeSource) {
-    return;
-  }
-
-  const buildingLayer: AnyLayer = {
-    id: RELIABLE_BUILDINGS_LAYER_ID,
-    source: "composite",
-    "source-layer": "building",
-    filter: ["==", ["get", "extrude"], "true"],
-    type: "fill-extrusion",
-    minzoom: 13.4,
-    slot: "middle",
-    paint: {
-      "fill-extrusion-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "height"],
-        0,
-        "#f4efe6",
-        90,
-        "#e8dfcf",
-        180,
-        "#d5c3a8",
-        280,
-        "#b9d7e8",
-      ],
-      "fill-extrusion-height": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        13.4,
-        0,
-        15.4,
-        ["coalesce", ["get", "height"], 12],
-      ],
-      "fill-extrusion-base": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        13.4,
-        0,
-        15.4,
-        ["coalesce", ["get", "min_height"], 0],
-      ],
-      "fill-extrusion-opacity": 0.74,
-      "fill-extrusion-vertical-gradient": true,
-      "fill-extrusion-emissive-strength": 0.05,
-    },
-  };
-
-  try {
-    map.addLayer(buildingLayer);
-  } catch {
-    // Some Mapbox Standard imports may hide the raw building source; the map stays usable.
-  }
-}
-
-function ensureRouteLayers(map: Map) {
-  if (!map.getSource(ROUTE_SOURCE_ID)) {
-    map.addSource(ROUTE_SOURCE_ID, {
-      type: "geojson",
-      data: EMPTY_ROUTE_COLLECTION,
-      lineMetrics: true,
-    });
-  }
-
-  if (!map.getLayer(ROUTE_CASING_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTE_CASING_LAYER_ID,
-      type: "line",
-      source: ROUTE_SOURCE_ID,
-      slot: "top",
-      layout: {
-        "line-cap": "round",
-        "line-join": "round",
-      },
-      paint: {
-        "line-color": [
-          "case",
-          ["boolean", ["get", "active"], false],
-          "rgba(15, 23, 42, 0.74)",
-          "rgba(15, 23, 42, 0.3)",
-        ],
-        "line-width": buildActiveAwareLineWidth({
-          zoomStops: [
-            [10, 9, 3.5],
-            [14, 16, 6],
-            [16, 21, 8],
-          ],
-        }),
-        "line-opacity": [
-          "case",
-          ["boolean", ["get", "active"], false],
-          0.76,
-          0.08,
-        ],
-        "line-blur": 0.7,
-        "line-emissive-strength": 0.2,
-      },
-    });
-  }
-
-  if (!map.getLayer(ROUTE_UNDERLAY_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTE_UNDERLAY_LAYER_ID,
-      type: "line",
-      source: ROUTE_SOURCE_ID,
-      slot: "top",
-      layout: {
-        "line-cap": "round",
-        "line-join": "round",
-      },
-      paint: {
-        "line-color": [
-          "case",
-          ["boolean", ["get", "active"], false],
-          "rgba(34, 211, 238, 0.7)",
-          "rgba(20, 184, 166, 0.2)",
-        ],
-        "line-width": buildActiveAwareLineWidth({
-          zoomStops: [
-            [10, 6.4, 2.5],
-            [14, 11.5, 4.2],
-            [16, 15, 6],
-          ],
-        }),
-        "line-opacity": [
-          "case",
-          ["boolean", ["get", "active"], false],
-          0.86,
-          0.1,
-        ],
-        "line-blur": 1.2,
-        "line-emissive-strength": 0.5,
-      },
-    });
-  }
-
-  if (!map.getLayer(ROUTE_ACTIVE_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTE_ACTIVE_LAYER_ID,
-      type: "line",
-      source: ROUTE_SOURCE_ID,
-      slot: "top",
-      filter: ["==", ["get", "active"], true],
-      layout: {
-        "line-cap": "round",
-        "line-join": "round",
-      },
-      paint: {
-        "line-color": "#22d3ee",
-        "line-width": ["interpolate", ["linear"], ["zoom"], 10, 4.8, 14, 8, 16, 10],
-        "line-opacity": 0.96,
-        "line-emissive-strength": 0.78,
-      },
-    });
-  }
-
-  if (!map.getLayer(ROUTE_ACTIVE_DASH_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTE_ACTIVE_DASH_LAYER_ID,
-      type: "line",
-      source: ROUTE_SOURCE_ID,
-      slot: "top",
-      filter: ["==", ["get", "active"], true],
-      layout: {
-        "line-cap": "round",
-        "line-join": "round",
-      },
-      paint: {
-        "line-color": "#fef3c7",
-        "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1.8, 14, 3, 16, 4],
-        "line-opacity": 0.92,
-        "line-dasharray": ROUTE_DASH_SEQUENCE[0],
-        "line-emissive-strength": 0.9,
-      },
-    });
-  }
-}
-
-function ensureRouteStopLayers(map: Map) {
-  if (!map.getSource(ROUTE_STOP_SOURCE_ID)) {
-    map.addSource(ROUTE_STOP_SOURCE_ID, {
-      type: "geojson",
-      data: EMPTY_ROUTE_STOP_COLLECTION,
-    });
-  }
-
-  const routeStopHaloLayer: AnyLayer = {
-    id: ROUTE_STOP_HALO_LAYER_ID,
-    type: "circle",
-    source: ROUTE_STOP_SOURCE_ID,
-    slot: "top",
-    paint: {
-      "circle-color": [
-        "case",
-        ["boolean", ["get", "active"], false],
-        [
-          "match",
-          ["get", "kind"],
-          "airport",
-          "#60a5fa",
-          "selected-hotel",
-          "#67e8f9",
-          "extracted-place",
-          "#fde68a",
-          "#c4b5fd",
-        ],
-        "rgba(148, 163, 184, 0.7)",
-      ],
-      "circle-radius": [
-        "case",
-        ["boolean", ["get", "active"], false],
-        15,
-        10,
-      ],
-      "circle-opacity": [
-        "case",
-        ["boolean", ["get", "active"], false],
-        0.88,
-        0.36,
-      ],
-      "circle-stroke-color": "rgba(15, 23, 42, 0.82)",
-      "circle-stroke-width": 2,
-      "circle-blur": 0.04,
-      "circle-emissive-strength": 0.32,
-    },
-  };
-
-  const routeStopNumberLayer: AnyLayer = {
-    id: ROUTE_STOP_NUMBER_LAYER_ID,
-    type: "symbol",
-    source: ROUTE_STOP_SOURCE_ID,
-    slot: "top",
-    layout: {
-      "text-field": ["to-string", ["get", "sequence"]],
-      "text-font": ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
-      "text-size": [
-        "case",
-        ["boolean", ["get", "active"], false],
-        11,
-        9,
-      ],
-      "text-allow-overlap": true,
-      "text-ignore-placement": true,
-    },
-    paint: {
-      "text-color": "rgba(2, 6, 23, 0.92)",
-      "text-emissive-strength": 0.22,
-    },
-  };
-
-  const routeStopLabelLayer: AnyLayer = {
-    id: ROUTE_STOP_LABEL_LAYER_ID,
-    type: "symbol",
-    source: ROUTE_STOP_SOURCE_ID,
-    slot: "top",
-    filter: ["==", ["get", "active"], true],
-    layout: {
-      "text-field": ["get", "name"],
-      "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Regular"],
-      "text-size": 11,
-      "text-offset": [0, 1.55],
-      "text-anchor": "top",
-      "text-max-width": 9,
-      "text-allow-overlap": false,
-    },
-    paint: {
-      "text-color": "#f8fafc",
-      "text-halo-color": "rgba(15, 23, 42, 0.84)",
-      "text-halo-width": 1.4,
-      "text-emissive-strength": 0.32,
-    },
-  };
-
-  [routeStopHaloLayer, routeStopNumberLayer, routeStopLabelLayer].forEach((layer) => {
-    if (!map.getLayer(layer.id)) {
-      map.addLayer(layer);
-    }
-  });
-}
-
-function ensurePlaceLayers(map: Map) {
-  if (!map.getSource(PLACE_SOURCE_ID)) {
-    map.addSource(PLACE_SOURCE_ID, {
-      type: "geojson",
-      data: EMPTY_PLACE_COLLECTION,
-      cluster: true,
-      clusterRadius: 80,
-      clusterMaxZoom: 11,
-      clusterMinPoints: 2,
-    });
-  }
-
-  const clusterLayer: AnyLayer = {
-    id: PLACE_CLUSTER_LAYER_ID,
-    type: "circle",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["has", "point_count"],
-    paint: {
-      "circle-color": [
-        "step",
-        ["get", "point_count"],
-        "#fde68a",
-        4,
-        "#facc15",
-        8,
-        "#fb923c",
-      ],
-      "circle-radius": ["step", ["get", "point_count"], 23, 4, 28, 8, 34],
-      "circle-opacity": 0.94,
-      "circle-stroke-color": "rgba(15, 23, 42, 0.76)",
-      "circle-stroke-width": 2,
-      "circle-blur": 0.02,
-      "circle-emissive-strength": 0.18,
-    },
-  };
-
-  const clusterCountLayer: AnyLayer = {
-    id: PLACE_CLUSTER_COUNT_LAYER_ID,
-    type: "symbol",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["has", "point_count"],
-    layout: {
-      "text-field": ["get", "point_count_abbreviated"],
-      "text-font": ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
-      "text-size": 13,
-      "text-allow-overlap": true,
-      "text-ignore-placement": true,
-    },
-    paint: {
-      "text-color": "rgba(3, 7, 18, 0.92)",
-      "text-emissive-strength": 0.25,
-    },
-  };
-
-  const clusterHitboxLayer: AnyLayer = {
-    id: PLACE_CLUSTER_HITBOX_LAYER_ID,
-    type: "circle",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["has", "point_count"],
-    paint: {
-      "circle-color": "#ffffff",
-      "circle-radius": ["step", ["get", "point_count"], 31, 4, 37, 8, 44],
-      "circle-opacity": 0.01,
-    },
-  };
-
-  const placeSelectedPulseLayer: AnyLayer = {
-    id: PLACE_SELECTED_PULSE_LAYER_ID,
-    type: "circle",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: [
-      "all",
-      ["!", ["has", "point_count"]],
-      ["==", ["get", "selected"], true],
-    ],
-    paint: {
-      "circle-color": "#22d3ee",
-      "circle-radius": 32,
-      "circle-opacity": 0.2,
-      "circle-stroke-color": "#fef3c7",
-      "circle-stroke-width": 2,
-      "circle-blur": 0.28,
-      "circle-emissive-strength": 0.58,
-    },
-  };
-
-  const placeHaloLayer: AnyLayer = {
-    id: PLACE_HALO_LAYER_ID,
-    type: "circle",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["!", ["has", "point_count"]],
-    paint: {
-      "circle-color": placeColorExpression(),
-      "circle-radius": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        34,
-        ["boolean", ["get", "muted"], false],
-        9,
-        18,
-      ],
-      "circle-opacity": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        0.54,
-        ["boolean", ["get", "muted"], false],
-        0.04,
-        0.2,
-      ],
-      "circle-blur": 0.42,
-      "circle-emissive-strength": 0.32,
-    },
-  };
-
-  const placeDotLayer: AnyLayer = {
-    id: PLACE_DOT_LAYER_ID,
-    type: "circle",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["!", ["has", "point_count"]],
-    paint: {
-      "circle-color": placeColorExpression(),
-      "circle-radius": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        15,
-        ["boolean", ["get", "muted"], false],
-        4.8,
-        8.5,
-      ],
-      "circle-stroke-color": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        "#fef3c7",
-        ["boolean", ["get", "muted"], false],
-        "rgba(255, 255, 255, 0.36)",
-        "rgba(255, 255, 255, 0.96)",
-      ],
-      "circle-stroke-width": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        6,
-        ["boolean", ["get", "muted"], false],
-        1.5,
-        5,
-      ],
-      "circle-opacity": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        1,
-        ["boolean", ["get", "muted"], false],
-        0.2,
-        0.98,
-      ],
-      "circle-emissive-strength": 0.38,
-    },
-  };
-
-  const placeGlyphLayer: AnyLayer = {
-    id: PLACE_GLYPH_LAYER_ID,
-    type: "symbol",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["!", ["has", "point_count"]],
-    layout: {
-      "text-field": ["get", "glyph"],
-      "text-font": ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
-      "text-size": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        13,
-        ["boolean", ["get", "muted"], false],
-        8,
-        10.5,
-      ],
-      "text-allow-overlap": true,
-      "text-ignore-placement": true,
-    },
-    paint: {
-      "text-color": "rgba(3, 7, 18, 0.9)",
-      "text-opacity": [
-        "case",
-        ["boolean", ["get", "selected"], false],
-        1,
-        ["boolean", ["get", "muted"], false],
-        0.22,
-        0.9,
-      ],
-      "text-emissive-strength": 0.18,
-    },
-  };
-
-  const placeHitboxLayer: AnyLayer = {
-    id: PLACE_HITBOX_LAYER_ID,
-    type: "circle",
-    source: PLACE_SOURCE_ID,
-    slot: "top",
-    filter: ["!", ["has", "point_count"]],
-    paint: {
-      "circle-color": "#ffffff",
-      "circle-radius": 24,
-      "circle-opacity": 0.01,
-    },
-  };
-
-  [
-    clusterLayer,
-    clusterCountLayer,
-    clusterHitboxLayer,
-    placeSelectedPulseLayer,
-    placeHaloLayer,
-    placeDotLayer,
-    placeGlyphLayer,
-    placeHitboxLayer,
-  ].forEach((layer) => {
-    if (!map.getLayer(layer.id)) {
-      map.addLayer(layer);
-    }
-  });
-}
-
-function ensureHotelHubLayers(map: Map) {
-  if (!map.getSource(HOTEL_HUB_SOURCE_ID)) {
-    map.addSource(HOTEL_HUB_SOURCE_ID, {
-      type: "geojson",
-      data: EMPTY_HOTEL_HUB_COLLECTION,
-    });
-  }
-
-  const hotelHubHaloLayer: AnyLayer = {
-    id: HOTEL_HUB_HALO_LAYER_ID,
-    type: "circle",
-    source: HOTEL_HUB_SOURCE_ID,
-    slot: "top",
-    paint: {
-      "circle-color": "#22d3ee",
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 28, 15, 48],
-      "circle-opacity": 0.3,
-      "circle-blur": 0.55,
-      "circle-emissive-strength": 0.42,
-    },
-  };
-
-  const hotelHubRingLayer: AnyLayer = {
-    id: HOTEL_HUB_RING_LAYER_ID,
-    type: "circle",
-    source: HOTEL_HUB_SOURCE_ID,
-    slot: "top",
-    paint: {
-      "circle-color": "rgba(15, 23, 42, 0.76)",
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 17, 15, 24],
-      "circle-stroke-color": "#fde68a",
-      "circle-stroke-width": 5,
-      "circle-opacity": 0.96,
-      "circle-emissive-strength": 0.28,
-    },
-  };
-
-  const hotelHubDotLayer: AnyLayer = {
-    id: HOTEL_HUB_DOT_LAYER_ID,
-    type: "circle",
-    source: HOTEL_HUB_SOURCE_ID,
-    slot: "top",
-    paint: {
-      "circle-color": "#67e8f9",
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 9, 15, 13],
-      "circle-stroke-color": "rgba(15, 23, 42, 0.94)",
-      "circle-stroke-width": 3,
-      "circle-opacity": 0.98,
-      "circle-emissive-strength": 0.38,
-    },
-  };
-
-  const hotelHubGlyphLayer: AnyLayer = {
-    id: HOTEL_HUB_GLYPH_LAYER_ID,
-    type: "symbol",
-    source: HOTEL_HUB_SOURCE_ID,
-    slot: "top",
-    layout: {
-      "text-field": ["get", "glyph"],
-      "text-font": ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
-      "text-size": 12,
-      "text-allow-overlap": true,
-      "text-ignore-placement": true,
-    },
-    paint: {
-      "text-color": "rgba(3, 7, 18, 0.92)",
-      "text-emissive-strength": 0.24,
-    },
-  };
-
-  const hotelHubLabelLayer: AnyLayer = {
-    id: HOTEL_HUB_LABEL_LAYER_ID,
-    type: "symbol",
-    source: HOTEL_HUB_SOURCE_ID,
-    slot: "top",
-    layout: {
-      "text-field": ["concat", "BASE  ", ["get", "name"]],
-      "text-font": ["DIN Offc Pro Bold", "Arial Unicode MS Bold"],
-      "text-size": 11,
-      "text-offset": [0, -3.1],
-      "text-anchor": "bottom",
-      "text-allow-overlap": false,
-      "text-ignore-placement": false,
-      "text-max-width": 16,
-    },
-    paint: {
-      "text-color": "#fef3c7",
-      "text-halo-color": "rgba(3, 7, 18, 0.9)",
-      "text-halo-width": 1.8,
-      "text-emissive-strength": 0.26,
-    },
-  };
-
-  [
-    hotelHubHaloLayer,
-    hotelHubRingLayer,
-    hotelHubDotLayer,
-    hotelHubGlyphLayer,
-    hotelHubLabelLayer,
-  ].forEach((layer) => {
-    if (!map.getLayer(layer.id)) {
-      map.addLayer(layer);
-    }
-  });
-}
-
 function updatePlaceSource(map: Map, placeCollection: PlaceFeatureCollection) {
   const source = map.getSource(PLACE_SOURCE_ID);
   if (source && "setData" in source) {
@@ -1724,207 +915,6 @@ function updateHotelHubSource(map: Map, hotelHubCollection: HotelHubFeatureColle
   if (source && "setData" in source) {
     (source as GeoJSONSource).setData(hotelHubCollection);
   }
-}
-
-function buildRouteFeatureCollection(
-  days: TripDay[],
-  places: TripPlace[],
-  selectedDay: DayFilter,
-  selectedRouteDay: TripDay["day"] | null,
-  activeRouteLegId: string | null,
-  hotelBase: TripHotelBase | undefined,
-  directionsBySignature: Readonly<Record<string, [number, number][]>>,
-): RouteFeatureCollection {
-  const routeDays =
-    selectedDay === "all" ? days : days.filter((day) => day.day === selectedDay);
-  const activeRouteDay = selectedDay === "all" ? selectedRouteDay : selectedDay;
-  const routePlans = buildDayRoutePlans(routeDays, places, hotelBase);
-  const placeById = new globalThis.Map<string, TripPlace>();
-  places.forEach((place) => {
-    placeById.set(place.id, place);
-  });
-  const features: RouteFeatureCollection["features"] = [];
-
-  routePlans.forEach((plan) => {
-    plan.legs.forEach((leg) => {
-      const coordinates = buildLegRouteCoordinates(leg, directionsBySignature);
-      if (coordinates.length < 2) {
-        return;
-      }
-
-      features.push({
-        type: "Feature",
-        id: leg.id,
-        properties: {
-          day: plan.day,
-          legIndex: leg.sequence,
-          fromName: leg.from.name,
-          toName: leg.to.name,
-          active: activeRouteLegId
-            ? leg.id === activeRouteLegId
-            : activeRouteDay !== null && plan.day === activeRouteDay,
-        },
-        geometry: {
-          type: "LineString",
-          coordinates,
-        },
-      });
-    });
-  });
-
-  if (features.length === 0) {
-    routeDays.forEach((day) => {
-      const coordinates =
-        day.route?.coordinates && day.route.coordinates.length >= 2
-          ? day.route.coordinates
-          : buildFallbackRouteCoordinates(day, placeById);
-
-      if (coordinates.length < 2) {
-        return;
-      }
-
-      features.push({
-        type: "Feature",
-        id: `day-${day.day}`,
-        properties: {
-          day: day.day,
-          legIndex: 1,
-          fromName: `Day ${day.day}`,
-          toName: `Day ${day.day}`,
-          active: activeRouteDay !== null && day.day === activeRouteDay,
-        },
-        geometry: {
-          type: "LineString",
-          coordinates,
-        },
-      });
-    });
-  }
-
-  return {
-    type: "FeatureCollection",
-    features,
-  };
-}
-
-function buildLegRouteCoordinates(
-  leg: DayRouteLeg,
-  directionsBySignature: Readonly<Record<string, [number, number][]>>,
-) {
-  const directionsRoute = directionsBySignature[leg.signature];
-  if (directionsRoute && directionsRoute.length >= 2) {
-    return directionsRoute;
-  }
-
-  return leg.fallbackCoordinates;
-}
-
-function buildRouteStopFeatureCollection(
-  routePlans: DayRoutePlan[],
-  selectedDay: DayFilter,
-  activeRouteDay: TripDay["day"] | null,
-): RouteStopFeatureCollection {
-  const routeDays =
-    selectedDay === "all"
-      ? routePlans
-      : routePlans.filter((plan) => plan.day === selectedDay);
-  const highlightedDay = selectedDay === "all" ? activeRouteDay : selectedDay;
-
-  return {
-    type: "FeatureCollection",
-    features: routeDays.flatMap((plan) =>
-      plan.stops.map((stop, index) => ({
-        type: "Feature" as const,
-        id: `day-${plan.day}-route-stop-${index}`,
-        properties: {
-          name: stop.name,
-          day: plan.day,
-          sequence: index + 1,
-          active: highlightedDay !== null && plan.day === highlightedDay,
-          kind: stop.kind,
-        },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [stop.lng, stop.lat] as [number, number],
-        },
-      })),
-    ),
-  };
-}
-
-function buildFallbackRouteCoordinates(
-  day: TripDay,
-  placeById: ReadonlyMap<string, TripPlace>,
-): [number, number][] {
-  return day.placeIds.flatMap((placeId) => {
-    const place = placeById.get(placeId);
-    if (!place || !isValidLngLat(place.lng, place.lat)) {
-      return [];
-    }
-
-    return [[place.lng, place.lat] as [number, number]];
-  });
-}
-
-function buildPlaceFeatureCollection(
-  places: TripPlace[],
-  selectedPlaceId: string | null,
-): PlaceFeatureCollection {
-  return {
-    type: "FeatureCollection",
-    features: places.flatMap((place) => {
-      if (!isValidLngLat(place.lng, place.lat)) {
-        return [];
-      }
-
-      return [
-        {
-          type: "Feature",
-          id: place.id,
-          properties: {
-            placeId: place.id,
-            name: place.name,
-            category: place.category,
-            day: place.day,
-            glyph: getMarkerGlyph(place.category),
-            selected: place.id === selectedPlaceId,
-            muted: selectedPlaceId !== null && place.id !== selectedPlaceId,
-          },
-          geometry: {
-            type: "Point",
-            coordinates: [place.lng, place.lat],
-          },
-        },
-      ];
-    }),
-  };
-}
-
-function buildHotelHubFeatureCollection(
-  hotelHub: ReturnType<typeof deriveHotelHub>,
-): HotelHubFeatureCollection {
-  if (!hotelHub) {
-    return EMPTY_HOTEL_HUB_COLLECTION;
-  }
-
-  return {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        id: "selected-hotel-base",
-        properties: {
-          name: hotelHub.name,
-          glyph: hotelHub.kind === "hotel" ? "H" : "B",
-          kind: hotelHub.kind,
-        },
-        geometry: {
-          type: "Point",
-          coordinates: [hotelHub.lng, hotelHub.lat],
-        },
-      },
-    ],
-  };
 }
 
 function registerPlaceInteractions(
@@ -1992,25 +982,6 @@ function registerPlaceInteractions(
       map.getCanvas().style.cursor = "";
     });
   });
-}
-
-function placeColorExpression(): ExpressionSpecification {
-  return [
-    "case",
-    ["boolean", ["get", "selected"], false],
-    "#fde68a",
-    [
-      "match",
-      ["get", "category"],
-      ["hotel", "transport", "station"],
-      "#67e8f9",
-      ["restaurant", "market"],
-      "#fb923c",
-      ["temple", "shrine", "landmark", "attraction"],
-      "#fde68a",
-      "#facc15",
-    ],
-  ] as ExpressionSpecification;
 }
 
 function getPointCoordinates(feature: { geometry?: GeoJSON.Geometry | null }) {
@@ -2107,22 +1078,4 @@ function getSelectedPlaceOffset(): [number, number] {
   }
 
   return [0, 0];
-}
-
-function getMarkerGlyph(category: TripPlace["category"]) {
-  const glyphByCategory: Partial<Record<TripPlace["category"], string>> = {
-    landmark: "L",
-    crossing: "X",
-    temple: "T",
-    shrine: "S",
-    market: "M",
-    restaurant: "R",
-    hotel: "H",
-    attraction: "A",
-    transport: "T",
-    activity: "A",
-    station: "S",
-  };
-
-  return glyphByCategory[category] ?? "P";
 }

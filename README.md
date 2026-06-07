@@ -108,7 +108,11 @@ Backend capabilities:
   - `backend/data/places.json`
   - `backend/data/hotel_base_output.json`
   - `backend/data/planner_output.json`
-- AP2 + x402 payment seam in `backend/spike_agentic_payments.py`.
+- Organized implementation packages for API streaming, planner logic, and AP2 + x402 payments:
+  - `backend/api/`
+  - `backend/planner/`
+  - `backend/payments/`
+- Compatibility facades remain in `backend/spike_planner.py` and `backend/spike_agentic_payments.py`.
 
 The backend keeps the demo dependable by separating live agent work from replayable cache data. The cache path is not a separate product mode; it is an operational guardrail for noisy network, scraper, and LLM latency during a live demo.
 
@@ -167,6 +171,20 @@ NEXT_PUBLIC_MAPBOX_TOKEN=...
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
+## Docs
+
+Current source-of-truth docs stay at the repo root:
+
+- `README.md` - product overview, local run commands, and verification.
+- `AGENTS.md` - agent-facing product and implementation rules.
+- `CLAUDE.md` - detailed backend contracts, package layout, SSE contract, env vars, and demo guardrails.
+
+Supporting docs live under `docs/`:
+
+- `docs/README.md` - docs map and current verified repo shape.
+- `docs/reference/agentic-payments.md` - AP2/x402 payment reference.
+- `docs/superpowers/` - historical specs and implementation plans.
+
 ## Demo Script
 
 1. Start backend on `8000` and frontend on `3000`.
@@ -194,7 +212,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
 ## Verification
 
-Frontend checks:
+Frontend checks, from `frontend/`:
 
 ```bash
 cd frontend
@@ -203,10 +221,10 @@ npm run typecheck
 npm run build
 ```
 
-Backend checks:
+Backend checks, from the repo root:
 
 ```bash
-uv run pytest
+uv run pytest backend/tests -q
 ```
 
-The latest frontend implementation was verified with unit tests, TypeScript, production build, and browser checks against the backend cache flow.
+The latest implementation was verified with backend pytest, frontend unit tests, TypeScript, production build, and browser checks against the backend cache flow.
