@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from backend.spike_hotel_base import HotelPreferenceInput
-from backend.spike_planner import UserPreferences
+from backend.planner.models import UserPreferences
 
 
 class ExtractRequest(BaseModel):

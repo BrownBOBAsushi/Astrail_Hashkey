@@ -41,7 +41,7 @@ from backend.spike_e2e import (
     _extract_for_reel,
     _scrape_reel,
 )
-from backend.spike_planner import (
+from backend.planner.runner import (
     ItineraryOutput,
     PlaceResult as PlannerPlace,
     UserPreferences,

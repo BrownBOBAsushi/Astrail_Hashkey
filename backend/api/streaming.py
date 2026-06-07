@@ -17,7 +17,7 @@ from backend.spike_hotel_base import (
     run_hotel_base_optimizer,
     sse_event as hotel_base_sse_event,
 )
-from backend.spike_planner import (
+from backend.planner.runner import (
     PlaceResult as PlannerPlace,
     UserPreferences,
     _GLOBAL_TIMEOUT,

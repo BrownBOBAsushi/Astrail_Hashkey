@@ -45,14 +45,14 @@ from backend.api.streaming import (
     sse_event as _streaming_sse_event,
 )
 
-from backend.spike_agentic_payments import (
+from backend.payments.ap2 import create_ap2_hotel_booking_mandate
+from backend.payments.models import (
     AP2HotelBookingMandateRequest,
     AP2MandateResponse,
-    AgenticHotelPaymentService,
     HotelBookingRequest,
     HotelBookingResponse,
-    create_ap2_hotel_booking_mandate,
 )
+from backend.payments.service import AgenticHotelPaymentService
 from backend.spike_e2e import PlaceResult as ExtractedPlace
 from backend.spike_e2e_planner import (
     _EXTRACTION_TIMEOUT,
