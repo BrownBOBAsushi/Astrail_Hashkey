@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import tempfile
 from dataclasses import dataclass
@@ -97,10 +98,16 @@ try {
 
 
 class HSPConfigError(RuntimeError):
-    def __init__(self, missing: list[str]):
-        self.code = "hsp_config_missing"
+    def __init__(
+        self,
+        missing: list[str],
+        *,
+        code: str = "hsp_config_missing",
+        message: str | None = None,
+    ):
+        self.code = code
         self.missing = missing
-        super().__init__("Missing HashKey HSP env vars: " + ", ".join(missing))
+        super().__init__(message or "Missing HashKey HSP env vars: " + ", ".join(missing))
 
 
 @dataclass(frozen=True)
@@ -144,7 +151,7 @@ class HSPConfig:
         return cls(
             coordinator_url=required["HSP_COORDINATOR_URL"].rstrip("/"),
             api_key=required["HSP_API_KEY"],
-            private_key=required["HSP_PRIVATE_KEY"],
+            private_key=_normalize_private_key(required["HSP_PRIVATE_KEY"]),
             chain=chain,
             chain_id=HASHKEY_TESTNET_CHAIN_ID,
             network=HASHKEY_TESTNET_NETWORK,
@@ -293,6 +300,28 @@ def _positive_int_env(name: str, default: int) -> int:
 
 def _path_env(name: str) -> str:
     return _normalize_env_path(os.getenv(name, "").strip())
+
+
+def _normalize_private_key(value: str) -> str:
+    clean = value.strip().strip("\"'")
+    if re.fullmatch(r"(0x)?[0-9a-fA-F]{40}", clean):
+        raise HSPConfigError(
+            ["HSP_PRIVATE_KEY"],
+            code="hsp_config_invalid",
+            message=(
+                "HSP_PRIVATE_KEY looks like a wallet address. "
+                "Use the exported private key for HSP_PAYER_ADDRESS, not the public address."
+            ),
+        )
+    if re.fullmatch(r"[0-9a-fA-F]{64}", clean):
+        return f"0x{clean}"
+    if re.fullmatch(r"0x[0-9a-fA-F]{64}", clean):
+        return clean
+    raise HSPConfigError(
+        ["HSP_PRIVATE_KEY"],
+        code="hsp_config_invalid",
+        message="HSP_PRIVATE_KEY must be a 32-byte hex private key: 0x followed by 64 hex characters.",
+    )
 
 
 def _normalize_env_path(value: str) -> str:

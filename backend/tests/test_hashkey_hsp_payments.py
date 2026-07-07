@@ -41,6 +41,44 @@ class HashKeyHSPConfigTests(unittest.TestCase):
         self.assertEqual(config.network, "eip155:133")
         self.assertEqual(config.usdc_address, "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6")
 
+    def test_config_adds_missing_private_key_prefix(self):
+        env = {
+            "X402_MODE": "hsp_testnet",
+            "HSP_COORDINATOR_URL": "https://hsp-hackathon.hashkeymerchant.com",
+            "HSP_API_KEY": "test-api-key",
+            "HSP_PRIVATE_KEY": "1" * 64,
+            "HSP_CHAIN": "hashkey-testnet",
+            "HSP_FACILITATOR_URL": "https://hsp-hackathon.hashkeymerchant.com/facilitator",
+            "HSP_PAYER_ADDRESS": "0x10252A4a30ea30D179678C7C4f7a452321945E30",
+            "HSP_PAYEE_ADDRESS": "0x2222222222222222222222222222222222222222",
+            "HSP_USDC_ADDRESS": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+            "HSP_ADAPTER_ADDRESS": "0x467AaF355DF243379B961Ce00abBae20c1e25012",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            config = HSPConfig.from_env()
+
+        self.assertEqual(config.private_key, "0x" + "1" * 64)
+
+    def test_config_rejects_address_as_private_key(self):
+        env = {
+            "X402_MODE": "hsp_testnet",
+            "HSP_COORDINATOR_URL": "https://hsp-hackathon.hashkeymerchant.com",
+            "HSP_API_KEY": "test-api-key",
+            "HSP_PRIVATE_KEY": "0x10252A4a30ea30D179678C7C4f7a452321945E30",
+            "HSP_CHAIN": "hashkey-testnet",
+            "HSP_FACILITATOR_URL": "https://hsp-hackathon.hashkeymerchant.com/facilitator",
+            "HSP_PAYER_ADDRESS": "0x10252A4a30ea30D179678C7C4f7a452321945E30",
+            "HSP_PAYEE_ADDRESS": "0x2222222222222222222222222222222222222222",
+            "HSP_USDC_ADDRESS": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+            "HSP_ADAPTER_ADDRESS": "0x467AaF355DF243379B961Ce00abBae20c1e25012",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            with self.assertRaises(HSPConfigError) as ctx:
+                HSPConfig.from_env()
+
+        self.assertEqual(ctx.exception.code, "hsp_config_invalid")
+        self.assertIn("wallet address", str(ctx.exception))
+
     def test_config_normalizes_windows_sdk_path_tab_escape(self):
         env = {
             "X402_MODE": "hsp_testnet",
