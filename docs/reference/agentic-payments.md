@@ -129,14 +129,24 @@ HSP_PRIVATE_KEY=...
 HSP_CHAIN=hashkey-testnet
 HSP_FACILITATOR_URL=https://hsp-hackathon.hashkeymerchant.com/facilitator
 HSP_ISSUER_URL=https://hsp-hackathon.hashkeymerchant.com/issuer
+HSP_RPC_URL=https://testnet.hsk.xyz
+HSP_SDK_PATH=/absolute/path/to/local/hsp
 HSP_PAYER_ADDRESS=...
 HSP_PAYEE_ADDRESS=...
 HSP_USDC_ADDRESS=0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6
 HSP_ADAPTER_ADDRESS=0x467AaF355DF243379B961Ce00abBae20c1e25012
+HSP_PAYMENT_AMOUNT_USDC=0.01
+HSP_AWAIT_SETTLED_TIMEOUT_MS=120000
 ```
 
 The HSP API key and wallet private key must stay server-side and must never be committed.
 Hotel fulfillment remains mock-only.
+
+The HashKey hackathon SDK is distributed as a repository, not a published npm
+package. Clone `https://github.com/project-hsp/hsp`, run `npm install` in that
+folder, then set `HSP_SDK_PATH` to the local clone. TripCanvas calls
+`@hsp/sdk` from that folder for the signed HSP mandate, x402 EIP-3009
+authorization, facilitator settlement, and coordinator observe step.
 
 Guardrails:
 

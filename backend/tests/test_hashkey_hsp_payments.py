@@ -153,11 +153,14 @@ class HashKeyHSPAdapterPaymentTests(unittest.TestCase):
             network="eip155:133",
             facilitator_url="https://hsp-hackathon.hashkeymerchant.com/facilitator",
             issuer_url="https://hsp-hackathon.hashkeymerchant.com/issuer",
+            rpc_url="https://testnet.hsk.xyz",
+            sdk_path="C:\\tmp\\hsp",
             payer_address="0x10252A4a30ea30D179678C7C4f7a452321945E30",
             payee_address="0x2222222222222222222222222222222222222222",
             usdc_address="0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
             adapter_address="0x467AaF355DF243379B961Ce00abBae20c1e25012",
             payment_amount_usdc=__import__("decimal").Decimal("0.01"),
+            await_settled_timeout_ms=120000,
         )
 
     def test_hsp_adapter_success_returns_settled_hashkey_receipt(self):
@@ -190,12 +193,12 @@ class HashKeyHSPAdapterPaymentTests(unittest.TestCase):
         self.assertIsNone(response.receipt)
 
 
-class RecordingTransport:
+class RecordingRunner:
     def __init__(self):
-        self.requests = []
+        self.payloads = []
 
-    def post(self, path, *, headers=None, json=None, timeout=None):
-        self.requests.append(("POST", path, headers or {}, json or {}, timeout))
+    def run_pay_x402(self, payload):
+        self.payloads.append(payload)
         return {
             "ok": True,
             "payment_id": "0xHSPPAYMENT",
@@ -206,12 +209,12 @@ class RecordingTransport:
 
 
 class HashKeyHSPClientTests(unittest.TestCase):
-    def test_client_sends_bearer_key_and_payment_inputs(self):
+    def test_client_invokes_local_sdk_runner_with_x402_inputs(self):
         from backend.payments.hsp import HSPClient
 
-        transport = RecordingTransport()
+        runner = RecordingRunner()
         config = HashKeyHSPAdapterPaymentTests()._config()
-        client = HSPClient(transport=transport)
+        client = HSPClient(runner=runner)
         result = client.pay_x402(
             config=config,
             instructions=type("Instructions", (), {
@@ -223,12 +226,33 @@ class HashKeyHSPClientTests(unittest.TestCase):
         )
 
         self.assertTrue(result["ok"])
-        method, path, headers, body, timeout = transport.requests[0]
-        self.assertEqual(method, "POST")
-        self.assertEqual(path, "https://hsp-hackathon.hashkeymerchant.com/payments")
-        self.assertEqual(headers["Authorization"], "Bearer test-api-key")
-        self.assertEqual(body["chain"], "hashkey-testnet")
-        self.assertEqual(body["idempotency_key"], "tc-demo:idempotent")
+        payload = runner.payloads[0]
+        self.assertEqual(payload["chain"], "hashkey-testnet")
+        self.assertEqual(payload["idempotency_key"], "tc-demo:idempotent")
+        self.assertEqual(payload["facilitator_url"], "https://hsp-hackathon.hashkeymerchant.com/facilitator")
+        self.assertEqual(payload["payee_address"], "0x2222222222222222222222222222222222222222")
+        self.assertEqual(payload["amount_base_units"], "10000")
+        self.assertEqual(payload["payment_request_id"], "x402-test")
+
+    def test_client_fails_closed_when_local_sdk_path_is_missing(self):
+        from dataclasses import replace
+
+        from backend.payments.hsp import HSPClient
+
+        config = replace(HashKeyHSPAdapterPaymentTests()._config(), sdk_path="")
+        client = HSPClient(runner=RecordingRunner())
+        result = client.pay_x402(
+            config=config,
+            instructions=type("Instructions", (), {
+                "hotel_id": "hotel_royal_park_shiodome",
+                "payment_request_id": "x402-test",
+                "amount": "0.01",
+            })(),
+            idempotency_key="tc-demo:idempotent",
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], "hsp_sdk_missing")
 
 
 if __name__ == "__main__":

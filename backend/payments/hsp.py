@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import os
+import subprocess
 from dataclasses import dataclass
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
-import httpx
 from pydantic import BaseModel, Field
 
 
@@ -18,8 +20,75 @@ HASHKEY_TESTNET_EXPLORER = "https://testnet-explorer.hsk.xyz"
 DEFAULT_HSP_COORDINATOR_URL = "https://hsp-hackathon.hashkeymerchant.com"
 DEFAULT_HSP_FACILITATOR_URL = DEFAULT_HSP_COORDINATOR_URL + "/facilitator"
 DEFAULT_HSP_ISSUER_URL = DEFAULT_HSP_COORDINATOR_URL + "/issuer"
+DEFAULT_HSP_RPC_URL = "https://testnet.hsk.xyz"
 DEFAULT_HSP_USDC_ADDRESS = "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6"
 DEFAULT_HSP_ADAPTER_ADDRESS = "0x467AaF355DF243379B961Ce00abBae20c1e25012"
+HSP_USDC_DECIMALS = 6
+
+
+_HSP_SDK_SCRIPT = r"""
+import { readFileSync } from 'node:fs';
+import { HSPClient } from '@hsp/sdk';
+import { resolveChain } from '@hsp/core/chains/index';
+import { getAddress } from 'viem';
+
+const input = JSON.parse(readFileSync(0, 'utf8'));
+
+function emit(payload) {
+  process.stdout.write(`${JSON.stringify(payload)}\n`);
+}
+
+try {
+  const chain = resolveChain(input.chain, {
+    rpcUrl: input.rpc_url,
+    stablecoin: {
+      address: getAddress(input.usdc_address),
+      symbol: 'USDC',
+      decimals: 6,
+    },
+  });
+  const hsp = new HSPClient({
+    coordinatorUrl: input.coordinator_url,
+    apiKey: input.api_key,
+    signer: { kind: 'privateKey', privateKey: input.private_key },
+    chain,
+    issuerUrl: input.issuer_url,
+  });
+
+  const expectedPayer = getAddress(input.payer_address);
+  if (getAddress(hsp.address) !== expectedPayer) {
+    throw new Error(`HSP_PAYER_ADDRESS ${expectedPayer} does not match HSP_PRIVATE_KEY signer ${hsp.address}`);
+  }
+
+  const handle = await hsp.payX402({
+    merchant: getAddress(input.payee_address),
+    facilitatorUrl: input.facilitator_url,
+    amount: BigInt(input.amount_base_units),
+    token: getAddress(input.usdc_address),
+  });
+  const snapshot = await handle.awaitSettled({
+    timeoutMs: input.await_timeout_ms,
+    pollMs: 2000,
+  });
+  emit({
+    ok: true,
+    payment_id: handle.paymentId,
+    status: snapshot.status ?? handle.status,
+    outcome_class:
+      snapshot.outcomeClass ??
+      snapshot.lastDecision?.outcomeClass ??
+      snapshot.decision?.outcomeClass ??
+      (snapshot.status === 'SETTLED' ? 'ACCEPT' : null),
+    tx_hash: handle.txHash,
+  });
+} catch (error) {
+  emit({
+    ok: false,
+    code: 'hsp_sdk_payment_failed',
+    message: error instanceof Error ? error.message : String(error),
+  });
+}
+"""
 
 
 class HSPConfigError(RuntimeError):
@@ -39,11 +108,14 @@ class HSPConfig:
     network: str
     facilitator_url: str
     issuer_url: str
+    rpc_url: str
+    sdk_path: str
     payer_address: str
     payee_address: str
     usdc_address: str
     adapter_address: str
     payment_amount_usdc: Decimal
+    await_settled_timeout_ms: int
 
     @classmethod
     def from_env(cls) -> "HSPConfig":
@@ -73,11 +145,14 @@ class HSPConfig:
             network=HASHKEY_TESTNET_NETWORK,
             facilitator_url=required["HSP_FACILITATOR_URL"].rstrip("/"),
             issuer_url=os.getenv("HSP_ISSUER_URL", DEFAULT_HSP_ISSUER_URL).strip().rstrip("/"),
+            rpc_url=os.getenv("HSP_RPC_URL", DEFAULT_HSP_RPC_URL).strip(),
+            sdk_path=os.getenv("HSP_SDK_PATH", "").strip(),
             payer_address=required["HSP_PAYER_ADDRESS"],
             payee_address=required["HSP_PAYEE_ADDRESS"],
             usdc_address=required["HSP_USDC_ADDRESS"],
             adapter_address=required["HSP_ADAPTER_ADDRESS"],
             payment_amount_usdc=Decimal(os.getenv("HSP_PAYMENT_AMOUNT_USDC", "0.01")),
+            await_settled_timeout_ms=_positive_int_env("HSP_AWAIT_SETTLED_TIMEOUT_MS", 120_000),
         )
 
 
@@ -106,46 +181,139 @@ class HSPReceiptSummary(BaseModel):
         return f"{self.coordinator_url.rstrip('/')}/explorer?paymentId={self.payment_id}"
 
 
-class HTTPXTransport:
-    def post(self, path: str, *, headers: dict[str, str], json: dict[str, Any], timeout: float):
-        with httpx.Client(timeout=timeout) as client:
-            response = client.post(path, headers=headers, json=json)
-            try:
-                payload = response.json()
-            except ValueError:
-                payload = {"ok": False, "error": response.text[:300]}
-            if response.status_code >= 400:
-                return {
-                    "ok": False,
-                    "code": "hsp_network_error",
-                    "message": str(payload.get("error") or payload),
-                }
-            return payload
+class HSPSdkRunner:
+    """Runs the official TypeScript HSP SDK from a local hackathon repo clone."""
+
+    def run_pay_x402(self, payload: dict[str, Any]) -> dict[str, Any]:
+        sdk_path = Path(str(payload["sdk_path"])).expanduser()
+        if not str(sdk_path).strip():
+            return _hsp_sdk_missing()
+        if not sdk_path.exists():
+            return {
+                "ok": False,
+                "code": "hsp_sdk_missing",
+                "message": f"HSP_SDK_PATH does not exist: {sdk_path}",
+            }
+        tsx = _tsx_bin(sdk_path)
+        if tsx is None:
+            return {
+                "ok": False,
+                "code": "hsp_sdk_not_installed",
+                "message": (
+                    "HSP_SDK_PATH must point to a cloned https://github.com/project-hsp/hsp "
+                    "repo with npm install already run."
+                ),
+            }
+        try:
+            completed = subprocess.run(
+                [str(tsx), "--eval", _HSP_SDK_SCRIPT],
+                cwd=sdk_path,
+                input=json.dumps(payload, separators=(",", ":")),
+                text=True,
+                capture_output=True,
+                timeout=max(30, int(payload["await_timeout_ms"] / 1000) + 90),
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return {
+                "ok": False,
+                "code": "hsp_sdk_timeout",
+                "message": "HashKey HSP SDK payment timed out.",
+            }
+        if completed.returncode != 0:
+            return {
+                "ok": False,
+                "code": "hsp_sdk_failed",
+                "message": _safe_process_error(completed.stderr, completed.stdout, payload),
+            }
+        try:
+            return _last_json_line(completed.stdout)
+        except ValueError as exc:
+            return {
+                "ok": False,
+                "code": "hsp_sdk_bad_output",
+                "message": str(exc),
+            }
 
 
 class HSPClient:
-    def __init__(self, *, transport: Any | None = None):
-        self.transport = transport or HTTPXTransport()
+    def __init__(self, *, runner: Any | None = None):
+        self.runner = runner or HSPSdkRunner()
 
     def pay_x402(self, *, config: HSPConfig, instructions: Any, idempotency_key: str) -> dict[str, Any]:
-        headers = {
-            "Authorization": f"Bearer {config.api_key}",
-            "Content-Type": "application/json",
-        }
-        body = {
+        if not config.sdk_path:
+            return _hsp_sdk_missing()
+        payload = {
             "chain": config.chain,
             "idempotency_key": idempotency_key,
-            "payer": config.payer_address,
-            "payee": config.payee_address,
-            "token": config.usdc_address,
-            "amount": str(config.payment_amount_usdc),
+            "coordinator_url": config.coordinator_url,
+            "facilitator_url": config.facilitator_url,
+            "issuer_url": config.issuer_url,
+            "rpc_url": config.rpc_url,
+            "api_key": config.api_key,
+            "private_key": config.private_key,
+            "sdk_path": config.sdk_path,
+            "payer_address": config.payer_address,
+            "payee_address": config.payee_address,
+            "usdc_address": config.usdc_address,
+            "amount_base_units": str(_usdc_base_units(config.payment_amount_usdc)),
+            "amount_usdc": str(config.payment_amount_usdc),
             "hotel_id": instructions.hotel_id,
             "payment_request_id": instructions.payment_request_id,
-            "facilitator_url": config.facilitator_url,
+            "await_timeout_ms": config.await_settled_timeout_ms,
         }
-        return self.transport.post(
-            config.coordinator_url + "/payments",
-            headers=headers,
-            json=body,
-            timeout=30,
-        )
+        return self.runner.run_pay_x402(payload)
+
+
+def _usdc_base_units(amount: Decimal) -> int:
+    return int(amount * (Decimal(10) ** HSP_USDC_DECIMALS))
+
+
+def _positive_int_env(name: str, default: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return default
+
+
+def _hsp_sdk_missing() -> dict[str, Any]:
+    return {
+        "ok": False,
+        "code": "hsp_sdk_missing",
+        "message": (
+            "HSP_SDK_PATH is required for X402_MODE=hsp_testnet. "
+            "Clone https://github.com/project-hsp/hsp, run npm install there, "
+            "and set HSP_SDK_PATH to that local folder."
+        ),
+    }
+
+
+def _tsx_bin(sdk_path: Path) -> Path | None:
+    if os.name == "nt":
+        candidate = sdk_path / "node_modules" / ".bin" / "tsx.cmd"
+    else:
+        candidate = sdk_path / "node_modules" / ".bin" / "tsx"
+    return candidate if candidate.exists() else None
+
+
+def _last_json_line(stdout: str) -> dict[str, Any]:
+    lines = [line.strip() for line in stdout.splitlines() if line.strip()]
+    for line in reversed(lines):
+        if not line.startswith("{"):
+            continue
+        loaded = json.loads(line)
+        if isinstance(loaded, dict):
+            return loaded
+    raise ValueError("HashKey HSP SDK produced no JSON output.")
+
+
+def _safe_process_error(stderr: str, stdout: str, payload: dict[str, Any]) -> str:
+    text = (stderr or stdout or "HashKey HSP SDK process failed.").strip()
+    for key in ("private_key", "api_key"):
+        secret = str(payload.get(key) or "")
+        if secret:
+            text = text.replace(secret, "[redacted]")
+    return text[:600]
