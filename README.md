@@ -10,8 +10,6 @@ payment flow on a Base testnet rail. This repository is the HashKey Chain Japan
 hackathon build: the same Mapbox-first travel agent experience, now extended to
 execute **HashKey HSP + x402 testnet USDC payments on HashKey Chain testnet**.
 
-Built by Year 1 students from the Singapore Institute of Technology.
-
 Website: https://astrail.xyz/
 
 ## What It Does
