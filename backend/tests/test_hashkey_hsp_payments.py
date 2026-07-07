@@ -1,5 +1,9 @@
+import json
 import os
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from backend.payments.hsp import HSPConfig, HSPConfigError, HSPReceiptSummary
@@ -272,6 +276,56 @@ class HashKeyHSPClientTests(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], "hsp_sdk_missing")
+
+
+class HashKeyHSPSdkRunnerTests(unittest.TestCase):
+    def test_runner_passes_payload_by_temp_file_not_stdin(self):
+        from backend.payments.hsp import HSPSdkRunner
+
+        payload_paths = []
+        script_paths = []
+        payload = {
+            "chain": "hashkey-testnet",
+            "sdk_path": "",
+            "await_timeout_ms": 120000,
+            "private_key": "private-secret",
+            "api_key": "api-secret",
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            sdk_path = Path(tmp)
+            bin_dir = sdk_path / "node_modules" / ".bin"
+            bin_dir.mkdir(parents=True)
+            (bin_dir / "tsx.cmd").write_text("", encoding="utf-8")
+            payload["sdk_path"] = str(sdk_path)
+
+            def fake_run(args, **kwargs):
+                self.assertNotIn("--eval", args)
+                script_path = Path(args[1])
+                script_paths.append(script_path)
+                self.assertTrue(script_path.exists())
+                self.assertNotIn("input", kwargs)
+                self.assertEqual(kwargs["stdin"], subprocess.DEVNULL)
+                payload_path = Path(kwargs["env"]["TRIPCANVAS_HSP_PAYLOAD_PATH"])
+                payload_paths.append(payload_path)
+                self.assertTrue(payload_path.exists())
+                written = json.loads(payload_path.read_text(encoding="utf-8"))
+                self.assertEqual(written["chain"], "hashkey-testnet")
+                return subprocess.CompletedProcess(
+                    args,
+                    0,
+                    stdout='{"ok":true,"payment_id":"0xHSPPAYMENT","status":"SETTLED","tx_hash":"0xabc"}\n',
+                    stderr="",
+                )
+
+            with patch("backend.payments.hsp.subprocess.run", side_effect=fake_run):
+                result = HSPSdkRunner().run_pay_x402(payload)
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(payload_paths)
+        self.assertTrue(script_paths)
+        self.assertFalse(payload_paths[0].exists())
+        self.assertFalse(script_paths[0].exists())
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -32,7 +33,11 @@ import { HSPClient } from '@hsp/sdk';
 import { resolveChain } from '@hsp/core/chains/index';
 import { getAddress } from 'viem';
 
-const input = JSON.parse(readFileSync(0, 'utf8'));
+const payloadPath = process.env.TRIPCANVAS_HSP_PAYLOAD_PATH;
+if (!payloadPath) {
+  throw new Error('TRIPCANVAS_HSP_PAYLOAD_PATH is required');
+}
+const input = JSON.parse(readFileSync(payloadPath, 'utf8'));
 
 function emit(payload) {
   process.stdout.write(`${JSON.stringify(payload)}\n`);
@@ -204,22 +209,29 @@ class HSPSdkRunner:
                     "repo with npm install already run."
                 ),
             }
+        payload_path = _write_payload_file(payload)
+        script_path = _write_script_file(sdk_path)
         try:
-            completed = subprocess.run(
-                [str(tsx), "--eval", _HSP_SDK_SCRIPT],
-                cwd=sdk_path,
-                input=json.dumps(payload, separators=(",", ":")),
-                text=True,
-                capture_output=True,
-                timeout=max(30, int(payload["await_timeout_ms"] / 1000) + 90),
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            return {
-                "ok": False,
-                "code": "hsp_sdk_timeout",
-                "message": "HashKey HSP SDK payment timed out.",
-            }
+            try:
+                completed = subprocess.run(
+                    [str(tsx), str(script_path)],
+                    cwd=sdk_path,
+                    stdin=subprocess.DEVNULL,
+                    text=True,
+                    capture_output=True,
+                    timeout=max(30, int(payload["await_timeout_ms"] / 1000) + 90),
+                    check=False,
+                    env=_hsp_runner_env(payload_path),
+                )
+            except subprocess.TimeoutExpired:
+                return {
+                    "ok": False,
+                    "code": "hsp_sdk_timeout",
+                    "message": "HashKey HSP SDK payment timed out.",
+                }
+        finally:
+            payload_path.unlink(missing_ok=True)
+            script_path.unlink(missing_ok=True)
         if completed.returncode != 0:
             return {
                 "ok": False,
@@ -297,6 +309,37 @@ def _hsp_sdk_missing() -> dict[str, Any]:
             "and set HSP_SDK_PATH to that local folder."
         ),
     }
+
+
+def _write_payload_file(payload: dict[str, Any]) -> Path:
+    with tempfile.NamedTemporaryFile(
+        "w",
+        delete=False,
+        encoding="utf-8",
+        prefix="tripcanvas-hsp-",
+        suffix=".json",
+    ) as fh:
+        json.dump(payload, fh, separators=(",", ":"))
+        return Path(fh.name)
+
+
+def _write_script_file(sdk_path: Path) -> Path:
+    with tempfile.NamedTemporaryFile(
+        "w",
+        delete=False,
+        encoding="utf-8",
+        prefix="tripcanvas-hsp-runner-",
+        suffix=".mjs",
+        dir=sdk_path,
+    ) as fh:
+        fh.write(_HSP_SDK_SCRIPT)
+        return Path(fh.name)
+
+
+def _hsp_runner_env(payload_path: Path) -> dict[str, str]:
+    env = os.environ.copy()
+    env["TRIPCANVAS_HSP_PAYLOAD_PATH"] = str(payload_path)
+    return env
 
 
 def _tsx_bin(sdk_path: Path) -> Path | None:
