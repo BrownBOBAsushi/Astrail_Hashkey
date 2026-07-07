@@ -19,6 +19,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from backend.payments.hsp import HSPReceiptSummary
+
 
 _DEFAULT_TRIP_ID = "tc-demo-osaka-001"
 _DEFAULT_CHECKIN = date(2026, 6, 10)
@@ -152,6 +154,7 @@ class PaymentReceipt(BaseModel):
     payee: str
     tx_hash: str
     status: Literal["simulated", "settled"] = "simulated"
+    hsp: HSPReceiptSummary | None = None
 
 
 class HotelBookingReceipt(BaseModel):

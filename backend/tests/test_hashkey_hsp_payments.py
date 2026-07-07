@@ -58,6 +58,34 @@ class HashKeyHSPConfigTests(unittest.TestCase):
             "https://hsp-hackathon.hashkeymerchant.com/explorer?paymentId=0xabc",
         )
 
+    def test_payment_receipt_accepts_hsp_metadata(self):
+        from backend.payments.service import PaymentReceipt
+
+        receipt = PaymentReceipt(
+            protocol="x402",
+            network="hashkey-testnet",
+            asset="USDC",
+            amount="0.01",
+            payer="0x10252A4a30ea30D179678C7C4f7a452321945E30",
+            payee="0x2222222222222222222222222222222222222222",
+            tx_hash="0x" + "b" * 64,
+            status="settled",
+            hsp=HSPReceiptSummary(
+                coordinator_url="https://hsp-hackathon.hashkeymerchant.com",
+                chain="hashkey-testnet",
+                chain_id=133,
+                payment_id="0xpayment",
+                status="SETTLED",
+                outcome_class="ACCEPT",
+                tx_hash="0x" + "b" * 64,
+                adapter_address="0x467AaF355DF243379B961Ce00abBae20c1e25012",
+            ),
+        )
+
+        dumped = receipt.model_dump()
+        self.assertEqual(dumped["hsp"]["chain"], "hashkey-testnet")
+        self.assertEqual(dumped["hsp"]["status"], "SETTLED")
+
 
 if __name__ == "__main__":
     unittest.main()
