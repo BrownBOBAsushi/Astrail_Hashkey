@@ -442,13 +442,100 @@ class HSPX402Adapter(X402SimulationAdapter):
         request: HotelBookingRequest,
         instructions: PaymentInstructions,
     ) -> PaymentProof:
-        self._config()
+        config = self._config()
         if self.hsp_client is None:
             raise X402RealPaymentError(
                 "hsp_client_missing",
                 "HashKey HSP client is not configured.",
             )
-        return super().create_payment_proof(request, instructions)
+        idempotency_key = _require_idempotency_key(request)
+        result = self.hsp_client.pay_x402(
+            config=config,
+            instructions=instructions,
+            idempotency_key=idempotency_key,
+        )
+        if not result.get("ok"):
+            raise X402RealPaymentError(
+                str(result.get("code") or "hsp_payment_failed"),
+                str(result.get("message") or "HashKey HSP payment failed."),
+            )
+        return PaymentProof(
+            network=config.chain,
+            asset="USDC",
+            amount=str(config.payment_amount_usdc),
+            payer=config.payer_address,
+            payee=config.payee_address,
+            hotel_id=instructions.hotel_id,
+            payment_request_id=instructions.payment_request_id,
+            idempotency_key=idempotency_key,
+            tx_hash=str(result["tx_hash"]),
+            status="signed",
+            simulated=False,
+            x402_payload={
+                "hsp": {
+                    "payment_id": result.get("payment_id"),
+                    "status": result.get("status"),
+                    "outcome_class": result.get("outcome_class"),
+                    "tx_hash": result.get("tx_hash"),
+                }
+            },
+        )
+
+    def validate_payment_proof(
+        self,
+        proof: PaymentProof,
+        instructions: PaymentInstructions,
+        idempotency_key: str,
+    ) -> PaymentReceipt:
+        config = self._config()
+        expected_fields = {
+            "network": config.chain,
+            "asset": "USDC",
+            "amount": str(config.payment_amount_usdc),
+            "payer": config.payer_address,
+            "payee": config.payee_address,
+            "hotel_id": instructions.hotel_id,
+            "payment_request_id": instructions.payment_request_id,
+            "idempotency_key": idempotency_key,
+        }
+        for field_name, expected in expected_fields.items():
+            if getattr(proof, field_name) != expected:
+                raise X402RealPaymentError(
+                    "hsp_payment_proof_mismatch",
+                    f"HashKey HSP payment proof {field_name} does not match the payment request.",
+                )
+        hsp = self.build_receipt_metadata(proof)
+        if hsp is None:
+            raise X402RealPaymentError(
+                "hsp_receipt_missing",
+                "HashKey HSP payment proof is missing receipt metadata.",
+            )
+        return PaymentReceipt(
+            network=proof.network,
+            asset=proof.asset,
+            amount=proof.amount,
+            payer=proof.payer,
+            payee=proof.payee,
+            tx_hash=proof.tx_hash,
+            status="settled",
+            hsp=hsp,
+        )
+
+    def build_receipt_metadata(self, proof: PaymentProof) -> HSPReceiptSummary | None:
+        hsp_payload = (proof.x402_payload or {}).get("hsp")
+        if not isinstance(hsp_payload, dict):
+            return None
+        config = self._config()
+        return HSPReceiptSummary(
+            coordinator_url=config.coordinator_url,
+            chain=config.chain,
+            chain_id=config.chain_id,
+            payment_id=hsp_payload.get("payment_id"),
+            status=str(hsp_payload.get("status") or "SETTLED"),
+            outcome_class=hsp_payload.get("outcome_class"),
+            tx_hash=hsp_payload.get("tx_hash"),
+            adapter_address=config.adapter_address,
+        )
 
     def _config(self) -> HSPConfig:
         if self.config is None:
@@ -691,6 +778,8 @@ class AgenticHotelPaymentService:
         try:
             normalized = self._normalize_request(request)
             context = self._build_context(normalized)
+        except HSPConfigError as exc:
+            return _payment_failed([], X402RealPaymentError(exc.code, str(exc)))
         except ConstraintViolation as exc:
             return _rejected(exc)
 
@@ -871,7 +960,10 @@ class AgenticHotelPaymentService:
                 f"Estimated stay total SGD {estimated_total_sgd} exceeds the mandate.",
             )
 
-        payment_context = _payment_context(request.hotel_base)
+        if isinstance(self.payment_adapter, HSPX402Adapter):
+            payment_context = _hsp_payment_context(self.payment_adapter._config())
+        else:
+            payment_context = _payment_context(request.hotel_base)
         agent_payment_usd = _decimal(payment_context["agent_payment_usd"])
         if agent_payment_usd > mandate.max_agent_payment_usd:
             raise ConstraintViolation(
@@ -895,8 +987,8 @@ class AgenticHotelPaymentService:
             agent_payment_usd=agent_payment_usd,
             network=str(payment_context["network"]),
             asset=str(payment_context["asset"]),
-            payer=os.getenv("ORCHESTRATOR_WALLET_ADDRESS", _DEFAULT_PAYER),
-            payee=os.getenv("HOTEL_AGENT_PAY_TO", _DEFAULT_PAYEE),
+            payer=str(payment_context.get("payer", os.getenv("ORCHESTRATOR_WALLET_ADDRESS", _DEFAULT_PAYER))),
+            payee=str(payment_context.get("payee", os.getenv("HOTEL_AGENT_PAY_TO", _DEFAULT_PAYEE))),
         )
 
 
@@ -1350,6 +1442,8 @@ def _validate_mandate(mandate: BookingMandate) -> None:
 def _payment_context(hotel_base: dict[str, Any]) -> dict[str, Any]:
     raw = hotel_base.get("payment_context")
     context = raw if isinstance(raw, dict) else {}
+    if _x402_mode() == "hsp_testnet":
+        return _hsp_payment_context(HSPConfig.from_env())
     if _x402_mode() == "real":
         network = os.getenv("X402_NETWORK", _DEFAULT_X402_NETWORK)
     else:
@@ -1363,6 +1457,18 @@ def _payment_context(hotel_base: dict[str, Any]) -> dict[str, Any]:
             os.getenv("X402_HOTEL_BOOKING_PRICE_USD", str(_DEFAULT_AGENT_PAYMENT_USD)),
         ),
         "mock_booking_only": context.get("mock_booking_only", True),
+    }
+
+
+def _hsp_payment_context(hsp_config: HSPConfig) -> dict[str, Any]:
+    return {
+        "payment_protocol": "x402",
+        "network": hsp_config.chain,
+        "asset": "USDC",
+        "agent_payment_usd": str(hsp_config.payment_amount_usdc),
+        "mock_booking_only": True,
+        "payer": hsp_config.payer_address,
+        "payee": hsp_config.payee_address,
     }
 
 
