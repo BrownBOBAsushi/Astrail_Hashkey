@@ -61,7 +61,7 @@ export function PlanApprovalCard({
             {confirmed ? "Hotel payment completed" : "Approve before the agent pays"}
           </h3>
           <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
-            AP2 captures your approval, then the hotel agent runs the x402 payment loop.
+            AP2 captures your approval, then the hotel agent runs the HashKey HSP + x402 payment loop.
           </p>
         </div>
         <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-amber-100">
@@ -89,13 +89,13 @@ export function PlanApprovalCard({
       {confirmed ? (
         <div className="mt-2 rounded-lg border border-teal-100/35 bg-teal-300/12 px-3 py-2">
           <p className="text-xs font-black text-teal-50">
-            Booking receipt issued. The payment rail is ready for Base Sepolia verification.
+            Booking receipt issued. The payment rail is ready for explorer verification.
           </p>
           <PaymentExplorerButtons links={explorerLinks} />
         </div>
       ) : (
         <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/45 px-3 py-2 text-[11px] font-semibold leading-4 text-slate-300">
-          AP2 gates the hotel-booking action; x402 handles the payment step on the selected rail.
+          AP2 gates the hotel-booking action; HashKey HSP + x402 handles the payment step when testnet mode is enabled.
         </div>
       )}
 

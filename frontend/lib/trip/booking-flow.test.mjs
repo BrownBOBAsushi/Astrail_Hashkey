@@ -49,6 +49,20 @@ test("payment labels preserve protocol, amount, network, and status", () => {
   );
 });
 
+test("formatPaymentLabel names HashKey HSP x402 rail", () => {
+  assert.equal(
+    bookingFlow.formatPaymentLabel({
+      protocol: "x402",
+      amount: "0.01",
+      asset: "USDC",
+      network: "hashkey-testnet",
+      status: "settled",
+      hsp: { status: "SETTLED", outcome_class: "ACCEPT" },
+    }),
+    "HashKey HSP x402 0.01 USDC on hashkey-testnet (settled)",
+  );
+});
+
 test("transaction hashes are shortened only when long", () => {
   assert.equal(bookingFlow.formatTxHash("0xabc"), "0xabc");
   assert.equal(

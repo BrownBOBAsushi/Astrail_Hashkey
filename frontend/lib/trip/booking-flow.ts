@@ -96,6 +96,7 @@ export function formatPaymentLabel(
         asset?: string;
         amount?: string;
         status?: string;
+        hsp?: unknown;
       }
     | null
     | undefined,
@@ -104,7 +105,11 @@ export function formatPaymentLabel(
     return "x402 terms pending";
   }
 
-  const protocol = payment.protocol ?? "x402";
+  const isHashKeyHsp =
+    payment.network === "hashkey-testnet" ||
+    payment.network === "eip155:133" ||
+    Boolean(payment.hsp);
+  const protocol = isHashKeyHsp ? "HashKey HSP x402" : payment.protocol ?? "x402";
   const amount = [payment.amount, payment.asset].filter(Boolean).join(" ");
   const network = payment.network ? ` on ${payment.network}` : "";
   const status = payment.status ? ` (${payment.status})` : "";
