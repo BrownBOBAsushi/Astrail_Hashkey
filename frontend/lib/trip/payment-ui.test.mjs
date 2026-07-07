@@ -76,6 +76,35 @@ test("buildPaymentExplorerLinks treats eip155:84532 as Base Sepolia", () => {
   assert.equal(links[0].url, `https://sepolia.basescan.org/tx/${txHash}`);
 });
 
+test("buildPaymentExplorerLinks supports HashKey testnet payment metadata", () => {
+  const links = paymentUi.buildPaymentExplorerLinks({
+    confirmed: true,
+    payment: {
+      network: "hashkey-testnet",
+      tx_hash: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      status: "settled",
+      hsp: {
+        coordinator_url: "https://hsp-hackathon.hashkeymerchant.com",
+        chain: "hashkey-testnet",
+        chain_id: 133,
+        payment_id: "0xHSPPAYMENT",
+        status: "SETTLED",
+        outcome_class: "ACCEPT",
+        tx_hash: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      },
+    },
+  });
+
+  assert.equal(
+    links.find((link) => link.label === "View transaction")?.url,
+    "https://testnet-explorer.hsk.xyz/tx/0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+  );
+  assert.equal(
+    links.find((link) => link.label === "HSP receipt")?.url,
+    "https://hsp-hackathon.hashkeymerchant.com/explorer?paymentId=0xHSPPAYMENT",
+  );
+});
+
 test("buildPaymentExplorerLinks stays empty before user-approved booking confirmation", () => {
   assert.deepEqual(
     paymentUi.buildPaymentExplorerLinks({

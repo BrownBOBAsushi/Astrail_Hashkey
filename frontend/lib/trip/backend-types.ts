@@ -239,6 +239,18 @@ export type HotelBookingPreview = {
   };
 };
 
+export type HSPReceiptSummary = {
+  coordinator_url?: string;
+  chain?: string;
+  chain_id?: number;
+  payment_id?: string | null;
+  status?: string;
+  outcome_class?: string | null;
+  tx_hash?: string | null;
+  adapter_address?: string | null;
+  simulated?: boolean;
+};
+
 export type AP2MandateResponse = {
   status: "signed" | "rejected" | string;
   ap2?: AP2MandateSummary | null;
@@ -255,6 +267,7 @@ export type HotelBookingPayment = {
   payee?: string;
   tx_hash?: string;
   status?: "simulated" | "settled" | "failed" | string;
+  hsp?: HSPReceiptSummary | null;
 };
 
 export type HotelBookingReceipt = {
