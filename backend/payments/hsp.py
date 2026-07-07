@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+import httpx
 from pydantic import BaseModel, Field
 
 
@@ -103,3 +104,48 @@ class HSPReceiptSummary(BaseModel):
         if not self.payment_id:
             return None
         return f"{self.coordinator_url.rstrip('/')}/explorer?paymentId={self.payment_id}"
+
+
+class HTTPXTransport:
+    def post(self, path: str, *, headers: dict[str, str], json: dict[str, Any], timeout: float):
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(path, headers=headers, json=json)
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = {"ok": False, "error": response.text[:300]}
+            if response.status_code >= 400:
+                return {
+                    "ok": False,
+                    "code": "hsp_network_error",
+                    "message": str(payload.get("error") or payload),
+                }
+            return payload
+
+
+class HSPClient:
+    def __init__(self, *, transport: Any | None = None):
+        self.transport = transport or HTTPXTransport()
+
+    def pay_x402(self, *, config: HSPConfig, instructions: Any, idempotency_key: str) -> dict[str, Any]:
+        headers = {
+            "Authorization": f"Bearer {config.api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "chain": config.chain,
+            "idempotency_key": idempotency_key,
+            "payer": config.payer_address,
+            "payee": config.payee_address,
+            "token": config.usdc_address,
+            "amount": str(config.payment_amount_usdc),
+            "hotel_id": instructions.hotel_id,
+            "payment_request_id": instructions.payment_request_id,
+            "facilitator_url": config.facilitator_url,
+        }
+        return self.transport.post(
+            config.coordinator_url + "/payments",
+            headers=headers,
+            json=body,
+            timeout=30,
+        )

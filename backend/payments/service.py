@@ -19,7 +19,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from backend.payments.hsp import HSPConfig, HSPConfigError, HSPReceiptSummary
+from backend.payments.hsp import HSPClient, HSPConfig, HSPConfigError, HSPReceiptSummary
 
 
 _DEFAULT_TRIP_ID = "tc-demo-osaka-001"
@@ -435,7 +435,7 @@ class HSPX402Adapter(X402SimulationAdapter):
     def __init__(self, *, config: HSPConfig | None = None, hsp_client: Any = None):
         super().__init__()
         self.config = config
-        self.hsp_client = hsp_client
+        self.hsp_client = hsp_client or HSPClient()
 
     def create_payment_proof(
         self,

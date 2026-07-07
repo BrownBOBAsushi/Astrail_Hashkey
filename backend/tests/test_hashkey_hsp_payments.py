@@ -190,5 +190,46 @@ class HashKeyHSPAdapterPaymentTests(unittest.TestCase):
         self.assertIsNone(response.receipt)
 
 
+class RecordingTransport:
+    def __init__(self):
+        self.requests = []
+
+    def post(self, path, *, headers=None, json=None, timeout=None):
+        self.requests.append(("POST", path, headers or {}, json or {}, timeout))
+        return {
+            "ok": True,
+            "payment_id": "0xHSPPAYMENT",
+            "status": "SETTLED",
+            "outcome_class": "ACCEPT",
+            "tx_hash": "0x" + "d" * 64,
+        }
+
+
+class HashKeyHSPClientTests(unittest.TestCase):
+    def test_client_sends_bearer_key_and_payment_inputs(self):
+        from backend.payments.hsp import HSPClient
+
+        transport = RecordingTransport()
+        config = HashKeyHSPAdapterPaymentTests()._config()
+        client = HSPClient(transport=transport)
+        result = client.pay_x402(
+            config=config,
+            instructions=type("Instructions", (), {
+                "hotel_id": "hotel_royal_park_shiodome",
+                "payment_request_id": "x402-test",
+                "amount": "0.01",
+            })(),
+            idempotency_key="tc-demo:idempotent",
+        )
+
+        self.assertTrue(result["ok"])
+        method, path, headers, body, timeout = transport.requests[0]
+        self.assertEqual(method, "POST")
+        self.assertEqual(path, "https://hsp-hackathon.hashkeymerchant.com/payments")
+        self.assertEqual(headers["Authorization"], "Bearer test-api-key")
+        self.assertEqual(body["chain"], "hashkey-testnet")
+        self.assertEqual(body["idempotency_key"], "tc-demo:idempotent")
+
+
 if __name__ == "__main__":
     unittest.main()

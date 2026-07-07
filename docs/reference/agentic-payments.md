@@ -116,6 +116,28 @@ AP2_MANDATE_TTL_SECONDS=180
 AP2_DEMO_SIGNING_SECRET=...
 ```
 
+## HashKey HSP Testnet Mode
+
+`X402_MODE=hsp_testnet` targets the HashKey hackathon HSP sandbox.
+
+Required local-only env:
+
+```bash
+HSP_COORDINATOR_URL=https://hsp-hackathon.hashkeymerchant.com
+HSP_API_KEY=...
+HSP_PRIVATE_KEY=...
+HSP_CHAIN=hashkey-testnet
+HSP_FACILITATOR_URL=https://hsp-hackathon.hashkeymerchant.com/facilitator
+HSP_ISSUER_URL=https://hsp-hackathon.hashkeymerchant.com/issuer
+HSP_PAYER_ADDRESS=...
+HSP_PAYEE_ADDRESS=...
+HSP_USDC_ADDRESS=0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6
+HSP_ADAPTER_ADDRESS=0x467AaF355DF243379B961Ce00abBae20c1e25012
+```
+
+The HSP API key and wallet private key must stay server-side and must never be committed.
+Hotel fulfillment remains mock-only.
+
 Guardrails:
 
 - Never commit wallet private keys.
