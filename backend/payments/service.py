@@ -19,7 +19,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from backend.payments.hsp import HSPReceiptSummary
+from backend.payments.hsp import HSPConfig, HSPConfigError, HSPReceiptSummary
 
 
 _DEFAULT_TRIP_ID = "tc-demo-osaka-001"
@@ -429,6 +429,33 @@ class X402SimulationAdapter:
         )
 
 
+class HSPX402Adapter(X402SimulationAdapter):
+    """HashKey HSP/x402 adapter shell for testnet settlement."""
+
+    def __init__(self, *, config: HSPConfig | None = None, hsp_client: Any = None):
+        super().__init__()
+        self.config = config
+        self.hsp_client = hsp_client
+
+    def create_payment_proof(
+        self,
+        request: HotelBookingRequest,
+        instructions: PaymentInstructions,
+    ) -> PaymentProof:
+        self._config()
+        if self.hsp_client is None:
+            raise X402RealPaymentError(
+                "hsp_client_missing",
+                "HashKey HSP client is not configured.",
+            )
+        return super().create_payment_proof(request, instructions)
+
+    def _config(self) -> HSPConfig:
+        if self.config is None:
+            self.config = HSPConfig.from_env()
+        return self.config
+
+
 class X402SdkBinding:
     def __init__(
         self,
@@ -644,8 +671,11 @@ class X402RealAdapter:
 
 
 def build_x402_payment_adapter() -> Any:
-    if _x402_mode() == "real":
+    mode = _x402_mode()
+    if mode == "real":
         return X402RealAdapter()
+    if mode == "hsp_testnet":
+        return HSPX402Adapter()
     return X402SimulationAdapter()
 
 
@@ -745,6 +775,11 @@ class AgenticHotelPaymentService:
                 )
                 prior_events.append(_ap2_mandate_verified_event(ap2_summary))
             proof = self.payment_adapter.create_payment_proof(normalized, first_attempt.payment_required)
+        except HSPConfigError as exc:
+            return _payment_failed(
+                prior_events,
+                X402RealPaymentError(exc.code, str(exc)),
+            )
         except PaymentAdapterError as exc:
             return _payment_failed(prior_events, exc)
         except ConstraintViolation as exc:
@@ -1288,10 +1323,10 @@ def _validate_environment() -> None:
             "HOTEL_BOOKING_MODE must be unset or 'mock' for demo booking.",
         )
     x402_mode = _x402_mode()
-    if x402_mode not in {"simulation", "real"}:
+    if x402_mode not in {"simulation", "real", "hsp_testnet"}:
         raise ConstraintViolation(
-            "x402_mode_not_supported",
-            "X402_MODE must be 'simulation' or 'real'.",
+            "x402_mode_invalid",
+            "X402_MODE must be 'simulation', 'real', or 'hsp_testnet'.",
         )
 
 
