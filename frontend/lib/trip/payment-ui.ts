@@ -4,12 +4,6 @@ export type PaymentExplorerLink = {
   kind: "transaction" | "wallet";
 };
 
-export const ORCHESTRATOR_WALLET_URL =
-  "https://sepolia.basescan.org/address/0x407F9c97a9CE80a9fa95765c861BC6dfe8eBEDD4#tokentxns";
-
-export const HOTEL_AGENT_WALLET_URL =
-  "https://sepolia.basescan.org/address/0x009e5eC03b638194DF3F10f158d311883cBFE5B7#tokentxns";
-
 const HASHKEY_TESTNET_EXPLORER = "https://testnet-explorer.hsk.xyz";
 
 type PaymentLike = {
@@ -54,19 +48,6 @@ export function buildPaymentExplorerLinks({
       kind: "transaction",
     });
   }
-
-  links.push(
-    {
-      label: "Orchestrator wallet",
-      url: ORCHESTRATOR_WALLET_URL,
-      kind: "wallet",
-    },
-    {
-      label: "Hotel Agent wallet",
-      url: HOTEL_AGENT_WALLET_URL,
-      kind: "wallet",
-    },
-  );
 
   return links;
 }

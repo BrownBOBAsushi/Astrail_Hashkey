@@ -18,7 +18,7 @@ async function importPaymentUiModule() {
 
 const paymentUi = await importPaymentUiModule();
 
-test("buildPaymentExplorerLinks always exposes the demo wallet addresses after confirmation", () => {
+test("buildPaymentExplorerLinks does not expose stale demo wallet addresses", () => {
   const links = paymentUi.buildPaymentExplorerLinks({
     confirmed: true,
     payment: {
@@ -28,19 +28,7 @@ test("buildPaymentExplorerLinks always exposes the demo wallet addresses after c
     },
   });
 
-  assert.deepEqual(
-    links.map((link) => [link.label, link.url]),
-    [
-      [
-        "Orchestrator wallet",
-        "https://sepolia.basescan.org/address/0x407F9c97a9CE80a9fa95765c861BC6dfe8eBEDD4#tokentxns",
-      ],
-      [
-        "Hotel Agent wallet",
-        "https://sepolia.basescan.org/address/0x009e5eC03b638194DF3F10f158d311883cBFE5B7#tokentxns",
-      ],
-    ],
-  );
+  assert.deepEqual(links, []);
 });
 
 test("buildPaymentExplorerLinks includes a transaction link for real Base Sepolia tx hashes", () => {
@@ -59,7 +47,7 @@ test("buildPaymentExplorerLinks includes a transaction link for real Base Sepoli
     url: `https://sepolia.basescan.org/tx/${txHash}`,
     kind: "transaction",
   });
-  assert.equal(links.length, 3);
+  assert.equal(links.length, 1);
 });
 
 test("buildPaymentExplorerLinks treats eip155:84532 as Base Sepolia", () => {
@@ -102,6 +90,10 @@ test("buildPaymentExplorerLinks supports HashKey testnet payment metadata", () =
   assert.equal(
     links.find((link) => link.label === "HSP receipt")?.url,
     "https://hsp-hackathon.hashkeymerchant.com/explorer?paymentId=0xHSPPAYMENT",
+  );
+  assert.deepEqual(
+    links.map((link) => link.label),
+    ["View transaction", "HSP receipt"],
   );
 });
 
