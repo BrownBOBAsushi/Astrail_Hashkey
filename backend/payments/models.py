@@ -1,5 +1,6 @@
 """Pydantic models and payment-domain errors."""
 
+from backend.payments.hsp import HSPConfig, HSPConfigError, HSPReceiptSummary
 from backend.payments.service import (
     AP2HotelBookingMandateRequest,
     AP2MandateResponse,
@@ -36,6 +37,9 @@ __all__ = [
     "HotelBookingReceipt",
     "HotelBookingRequest",
     "HotelBookingResponse",
+    "HSPConfig",
+    "HSPConfigError",
+    "HSPReceiptSummary",
     "PaymentAdapterError",
     "PaymentInstructions",
     "PaymentProof",
