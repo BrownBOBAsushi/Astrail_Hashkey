@@ -41,7 +41,7 @@ export function LeftTripPanel({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[9px] font-black uppercase tracking-[0.24em] text-amber-200">
-            TripCanvas
+            Astrail
           </p>
           <h1 className="mt-1 line-clamp-2 text-lg font-black leading-5 tracking-tight text-white md:text-xl">
             {trip.title}

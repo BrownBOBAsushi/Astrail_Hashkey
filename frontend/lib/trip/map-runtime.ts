@@ -8,7 +8,7 @@ export function registerMapRuntimeGuards(map: Map) {
       return;
     }
 
-    console.warn("[TripCanvas map]", message || "Mapbox emitted an error event.");
+    console.warn("[Astrail map]", message || "Mapbox emitted an error event.");
   };
 
   const handleWebGlContextLost = (event: MapEventOf<"webglcontextlost">) => {

@@ -15,7 +15,7 @@ import {
 import { ReelInputPanel } from "@/components/trip/ReelInputPanel";
 import { RightTripPanel, type RightPanelTab } from "@/components/trip/RightTripPanel";
 import { SelectedPlaceCard } from "@/components/trip/SelectedPlaceCard";
-import { TripCanvasShell } from "@/components/trip/TripCanvasShell";
+import { AstrailShell } from "@/components/trip/AstrailShell";
 import {
   INITIAL_BOOKING_FLOW_STATE,
   buildBookingLogDetail,
@@ -64,11 +64,11 @@ import {
 } from "@/lib/trip/generation-state";
 import type { DayFilter, TripExperience, TripHotelBase, TripPlace } from "@/lib/trip/types";
 
-const DEMO_AP2_TRIP_ID = "tc-demo-osaka-001";
+const DEMO_AP2_TRIP_ID = "astrail-demo-osaka-001";
 
 const EMPTY_GLOBE_TRIP: TripExperience = {
   id: "empty-globe",
-  title: "TripCanvas",
+  title: "Astrail",
   datesLabel: "Trip dates",
   destination: {
     city: "Earth",
@@ -878,7 +878,7 @@ export function TripGenerationShell() {
 
   if (status === "trip_ready" && finalTrip) {
     return (
-      <TripCanvasShell
+      <AstrailShell
         trip={finalTrip}
         hotelBase={finalTrip.hotelBase}
         dataNotice={cacheNotice ?? undefined}
@@ -1187,7 +1187,7 @@ function MissingMapboxToken() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-amber-200">
             Map token required
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">TripCanvas needs Mapbox</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Astrail needs Mapbox</h1>
           <p className="mt-4 text-sm leading-6 text-slate-300">
             Add a public Mapbox token to{" "}
             <code className="rounded bg-white/10 px-1.5 py-1 text-amber-100">

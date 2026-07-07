@@ -92,7 +92,7 @@ def booking_ready_hotel_tool() -> dict:
 
 def demo_mandate(**overrides) -> BookingMandate:
     data = {
-        "mandate_id": "ap2-demo-tc-osaka-001",
+        "mandate_id": "ap2-demo-astrail-osaka-001",
         "mode": "autonomous",
         "allowed_action": "mock_hotel_booking",
         "city": "Tokyo",
@@ -115,11 +115,11 @@ def demo_mandate(**overrides) -> BookingMandate:
 
 def demo_request(**overrides) -> HotelBookingRequest:
     data = {
-        "trip_id": "tc-demo-osaka-001",
+        "trip_id": "astrail-demo-osaka-001",
         "hotel_base": booking_ready_hotel_tool(),
         "mandate": demo_mandate(),
         "idempotency_key": (
-            "tc-demo-osaka-001:ap2-demo-tc-osaka-001:"
+            "astrail-demo-osaka-001:ap2-demo-astrail-osaka-001:"
             "hotel_royal_park_shiodome"
         ),
     }
@@ -141,7 +141,7 @@ def signed_demo_mandate():
         user_confirmation={
             "confirmed": True,
             "button_label": "Confirm Hotel Booking",
-            "trusted_surface": "tripcanvas-web",
+            "trusted_surface": "astrail-web",
         },
     )
     return response.ap2.signed_mandate
@@ -221,9 +221,9 @@ class AgenticHotelPaymentTests(unittest.TestCase):
         second = service.run_payment_loop(request)
 
         expected_booking_id = (
-            "TC-MOCK-HOTEL-"
+            "ASTRAIL-MOCK-HOTEL-"
             + hashlib.sha1(
-                "tc-demo-osaka-001|ap2-demo-tc-osaka-001|"
+                "astrail-demo-osaka-001|ap2-demo-astrail-osaka-001|"
                 "hotel_royal_park_shiodome|2026-06-10|2026-06-13|2".encode()
             )
             .hexdigest()[:8]
@@ -316,7 +316,7 @@ class AgenticHotelPaymentTests(unittest.TestCase):
         hotel_base["recommended_hotel"] = "Missing Hotel"
 
         response = AgenticHotelPaymentService().run_payment_loop({
-            "trip_id": "tc-demo-osaka-001",
+            "trip_id": "astrail-demo-osaka-001",
             "hotel_base": hotel_base,
         })
 
@@ -343,7 +343,7 @@ class AgenticHotelPaymentTests(unittest.TestCase):
                 user_confirmation={
                     "confirmed": False,
                     "button_label": "Confirm Hotel Booking",
-                    "trusted_surface": "tripcanvas-web",
+                    "trusted_surface": "astrail-web",
                 },
             )
 
@@ -358,16 +358,16 @@ class AgenticHotelPaymentTests(unittest.TestCase):
                 user_confirmation={
                     "confirmed": True,
                     "button_label": "Confirm Hotel Booking",
-                    "trusted_surface": "tripcanvas-web",
+                    "trusted_surface": "astrail-web",
                 },
             )
 
         self.assertEqual(response.status, "signed")
         self.assertEqual(response.ap2.status, "created")
-        self.assertEqual(response.ap2.signed_mandate.format, "tripcanvas-ap2-demo-jws")
+        self.assertEqual(response.ap2.signed_mandate.format, "astrail-ap2-demo-jws")
         self.assertEqual(
             response.ap2.signed_mandate.payload_json["vct"],
-            "tripcanvas.ap2.hotel_booking.confirmation.1",
+            "astrail.ap2.hotel_booking.confirmation.1",
         )
         self.assertEqual(
             response.ap2.signed_mandate.payload_json["checkout"]["hotel_id"],
@@ -583,8 +583,8 @@ class AgenticHotelPaymentTests(unittest.TestCase):
         response = TestClient(app).post(
             "/hotel-booking",
             json={
-                "trip_id": "tc-demo-osaka-001",
-                "idempotency_key": "tc-demo-osaka-001:demo",
+                "trip_id": "astrail-demo-osaka-001",
+                "idempotency_key": "astrail-demo-osaka-001:demo",
             },
         )
 
@@ -592,7 +592,7 @@ class AgenticHotelPaymentTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["status"], "mock_confirmed")
         self.assertEqual(payload["payment"]["status"], "simulated")
-        self.assertTrue(payload["receipt"]["booking_id"].startswith("TC-MOCK-HOTEL-"))
+        self.assertTrue(payload["receipt"]["booking_id"].startswith("ASTRAIL-MOCK-HOTEL-"))
         self.assertIn("No real hotel reservation was created", payload["receipt"]["receipt_note"])
         self.assertEqual(
             [event["type"] for event in payload["audit_events"]],
@@ -613,7 +613,7 @@ class AgenticHotelPaymentTests(unittest.TestCase):
                     "user_confirmation": {
                         "confirmed": True,
                         "button_label": "Confirm Hotel Booking",
-                        "trusted_surface": "tripcanvas-web",
+                        "trusted_surface": "astrail-web",
                     },
                 },
             )

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven development or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Clean and organize TripCanvas without changing the demo flow, backend API/SSE contracts, Mapbox frontend direction, or AP2/x402 payment behavior.
+**Goal:** Clean and organize Astrail without changing the demo flow, backend API/SSE contracts, Mapbox frontend direction, or AP2/x402 payment behavior.
 
 **Architecture:** Use the conservative cleanup path: make backend imports/package layout reliable first, then extract only the largest mixed-responsibility modules behind compatibility facades. Frontend cleanup should split pure helpers and presentational subcomponents out of oversized files while preserving the current UI and behavior.
 

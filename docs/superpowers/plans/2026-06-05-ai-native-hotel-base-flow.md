@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the AI-native TripCanvas flow where extracted Reel places drive a streamed hotel-base optimizer and weather-aware itinerary.
+**Goal:** Build the AI-native Astrail flow where extracted Reel places drive a streamed hotel-base optimizer and weather-aware itinerary.
 
 **Architecture:** Keep the repo's flat hackathon structure. Add a focused `backend/spike_hotel_base.py` module for the new agent/schema/cache contract, expose it via `POST /hotel-base` SSE in `backend/main.py`, extend `/itinerary` to accept hotel-base context, and add frontend state/screens around the existing `TripGenerationShell` and Mapbox workspace. Avoid new 3D/runtime dependencies in V1.
 
@@ -27,7 +27,7 @@ Modify:
 - `frontend/lib/trip/types.ts`: Add frontend hotel-base and weather strategy fields to `TripExperience`.
 - `frontend/lib/trip/normalize-trip.ts`: Normalize hotel-base and weather-adjustment data from backend payloads.
 - `frontend/components/trip/TripGenerationShell.tsx`: Add landing state, hotel-preference state, hotel-base streaming state, and progressive disclosure flow.
-- `frontend/components/trip/TripCanvasShell.tsx`: Pass hotel-base/weather data into final panels.
+- `frontend/components/trip/AstrailShell.tsx`: Pass hotel-base/weather data into final panels.
 - `frontend/components/trip/RightTripPanel.tsx`: Add `hotel-base` tab or summary content while keeping one active decision visible.
 - `frontend/components/map/TripMap.tsx`: Render selected hotel hub and base candidate markers without replacing Mapbox.
 - `frontend/app/globals.css`: Add landing/starfield and progressive disclosure utility styles.
@@ -210,7 +210,7 @@ git commit -m "test: define hotel base contract"
 Create `backend/spike_hotel_base.py` with:
 
 ```python
-"""Hotel-base optimizer for TripCanvas.
+"""Hotel-base optimizer for Astrail.
 
 This module evaluates where the user should stay after Reel extraction and
 before itinerary planning. It follows the repo's flat hackathon layout.
@@ -322,7 +322,7 @@ def build_hotel_base_prompt(
     )
     chips = hotel_preferences.chips or ["shortest_travel", "near_station", "best_value"]
     return f"""\
-You are TripCanvas' hotel-base optimizer. Choose where the traveler should stay
+You are Astrail's hotel-base optimizer. Choose where the traveler should stay
 after their Instagram Reels have been grounded into real places.
 
 Return exactly {_MAX_BASE_AREAS} base_areas and exactly {_MAX_HOTELS} hotel_candidates.
@@ -1188,16 +1188,16 @@ export function StarfieldLanding({ onBegin }: StarfieldLandingProps) {
       type="button"
       className="tc-starfield-landing group"
       onClick={onBegin}
-      aria-label="Begin planning with TripCanvas"
+      aria-label="Begin planning with Astrail"
     >
       <div className="tc-starfield-orbit" aria-hidden="true">
-        <span>TRIPCANVAS</span>
-        <span>TRIPCANVAS</span>
-        <span>TRIPCANVAS</span>
+        <span>ASTRAIL</span>
+        <span>ASTRAIL</span>
+        <span>ASTRAIL</span>
       </div>
       <div className="tc-starfield-globe" aria-hidden="true" />
       <div className="tc-starfield-copy">
-        <p>TripCanvas</p>
+        <p>Astrail</p>
         <h1>Saved Reels become a travel plan with a reasoning agent.</h1>
         <span>Click anywhere to begin</span>
       </div>
@@ -1675,7 +1675,7 @@ git commit -m "feat: add hotel base preference flow"
 **Files:**
 - Modify: `frontend/components/map/TripMap.tsx`
 - Modify: `frontend/components/trip/TripGenerationShell.tsx`
-- Modify: `frontend/components/trip/TripCanvasShell.tsx`
+- Modify: `frontend/components/trip/AstrailShell.tsx`
 
 - [ ] **Step 1: Add optional hotel base prop**
 
@@ -1708,7 +1708,7 @@ Use the existing selected-place styling when `hotelHubPlace` exists. Do not add 
 
 - [ ] **Step 3: Pass hotel base through shells**
 
-In `TripCanvasShell.tsx`, pass:
+In `AstrailShell.tsx`, pass:
 
 ```tsx
 hotelBase={trip.hotelBase}
@@ -1732,7 +1732,7 @@ Expected: no TypeScript errors.
 - [ ] **Step 5: Commit map hub preparation**
 
 ```bash
-git add frontend/components/map/TripMap.tsx frontend/components/trip/TripCanvasShell.tsx frontend/components/trip/TripGenerationShell.tsx
+git add frontend/components/map/TripMap.tsx frontend/components/trip/AstrailShell.tsx frontend/components/trip/TripGenerationShell.tsx
 git commit -m "feat: prepare map for hotel hub context"
 ```
 
@@ -1743,7 +1743,7 @@ git commit -m "feat: prepare map for hotel hub context"
 **Files:**
 - Create: `frontend/components/trip/WeatherStrategyStrip.tsx`
 - Modify: `frontend/components/trip/LeftTripPanel.tsx`
-- Modify: `frontend/components/trip/TripCanvasShell.tsx`
+- Modify: `frontend/components/trip/AstrailShell.tsx`
 - Modify: `frontend/components/trip/TripGenerationShell.tsx`
 - Modify: `frontend/lib/trip/generate-trip.ts`
 
@@ -1819,7 +1819,7 @@ export function WeatherStrategyStrip({ days }: WeatherStrategyStripProps) {
 
 - [ ] **Step 3: Show weather strip in final shell**
 
-In `TripCanvasShell.tsx`, import:
+In `AstrailShell.tsx`, import:
 
 ```tsx
 import { WeatherStrategyStrip } from "@/components/trip/WeatherStrategyStrip";
@@ -1865,7 +1865,7 @@ Expected: no TypeScript errors.
 - [ ] **Step 6: Commit final UI summary**
 
 ```bash
-git add frontend/components/trip/WeatherStrategyStrip.tsx frontend/components/trip/LeftTripPanel.tsx frontend/components/trip/TripCanvasShell.tsx frontend/components/trip/TripGenerationShell.tsx frontend/lib/trip/generate-trip.ts
+git add frontend/components/trip/WeatherStrategyStrip.tsx frontend/components/trip/LeftTripPanel.tsx frontend/components/trip/AstrailShell.tsx frontend/components/trip/TripGenerationShell.tsx frontend/lib/trip/generate-trip.ts
 git commit -m "feat: show hotel base and weather strategy"
 ```
 
@@ -1934,7 +1934,7 @@ curl -s http://localhost:8001/openapi.json | python -m json.tool | rg '"/hotel-b
 Expected:
 
 ```text
-{"status":"ok","service":"tripcanvas-backend"}
+{"status":"ok","service":"astrail-backend"}
 "/extract": {
 "/hotel-base": {
 "/itinerary": {

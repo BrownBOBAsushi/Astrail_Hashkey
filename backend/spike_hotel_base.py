@@ -1,4 +1,4 @@
-"""Hotel-base optimizer for TripCanvas.
+"""Hotel-base optimizer for Astrail.
 
 This module evaluates where the user should stay after Reel extraction and
 before itinerary planning. It follows the repo's flat hackathon layout.
@@ -139,7 +139,7 @@ def build_hotel_base_prompt(
     )
     chips = hotel_preferences.chips or ["shortest_travel", "near_station", "best_value"]
     return f"""\
-You are TripCanvas' hotel-base optimizer. Choose where the traveler should stay
+You are Astrail's hotel-base optimizer. Choose where the traveler should stay
 after their Instagram Reels have been grounded into real places.
 
 Return exactly {_MAX_BASE_AREAS} base_areas and exactly {_MAX_HOTELS} hotel_candidates.

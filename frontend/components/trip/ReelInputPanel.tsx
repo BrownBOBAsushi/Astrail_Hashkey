@@ -46,7 +46,7 @@ export function ReelInputPanel({
       className="rounded-xl border border-white/12 bg-slate-950/76 p-3 shadow-2xl shadow-black/35 backdrop-blur-xl lg:p-4"
     >
       <p className="text-[10px] font-black uppercase tracking-[0.28em] text-amber-200">
-        TripCanvas
+        Astrail
       </p>
       <h1 className="mt-1 text-xl font-black leading-6 tracking-tight text-white">
         Turn saved Reels into a live trip map

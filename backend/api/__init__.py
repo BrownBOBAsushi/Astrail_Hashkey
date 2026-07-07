@@ -1,1 +1,1 @@
-"""FastAPI API layer helpers for TripCanvas."""
+"""FastAPI API layer helpers for Astrail."""

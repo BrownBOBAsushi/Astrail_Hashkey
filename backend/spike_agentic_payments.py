@@ -1,4 +1,4 @@
-"""Compatibility facade for the TripCanvas agentic payment domain.
+"""Compatibility facade for the Astrail agentic payment domain.
 
 New code should import from `backend.payments.*`. This module preserves the
 original spike import path used by the FastAPI app and tests.

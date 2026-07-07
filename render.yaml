@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tripcanvas-backend
+    name: astrail-backend
     runtime: python
     plan: free
     region: singapore

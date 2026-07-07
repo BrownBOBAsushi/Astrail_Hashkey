@@ -7,31 +7,31 @@ import {
 } from "@/lib/trip/map-feature-collections";
 import { buildActiveAwareLineWidth } from "@/lib/trip/map-style";
 
-export const RELIABLE_BUILDINGS_LAYER_ID = "tripcanvas-reliable-3d-buildings";
-export const ROUTE_SOURCE_ID = "tripcanvas-routes";
-export const ROUTE_CASING_LAYER_ID = "tripcanvas-routes-casing";
-export const ROUTE_UNDERLAY_LAYER_ID = "tripcanvas-routes-underlay";
-export const ROUTE_ACTIVE_LAYER_ID = "tripcanvas-routes-active";
-export const ROUTE_ACTIVE_DASH_LAYER_ID = "tripcanvas-routes-active-dash";
-export const ROUTE_STOP_SOURCE_ID = "tripcanvas-route-stops";
-export const ROUTE_STOP_HALO_LAYER_ID = "tripcanvas-route-stop-halos";
-export const ROUTE_STOP_NUMBER_LAYER_ID = "tripcanvas-route-stop-numbers";
-export const ROUTE_STOP_LABEL_LAYER_ID = "tripcanvas-route-stop-labels";
-export const PLACE_SOURCE_ID = "tripcanvas-places";
-export const PLACE_CLUSTER_LAYER_ID = "tripcanvas-place-clusters";
-export const PLACE_CLUSTER_COUNT_LAYER_ID = "tripcanvas-place-cluster-counts";
-export const PLACE_CLUSTER_HITBOX_LAYER_ID = "tripcanvas-place-cluster-hitbox";
-export const PLACE_SELECTED_PULSE_LAYER_ID = "tripcanvas-place-selected-pulse";
-export const PLACE_HALO_LAYER_ID = "tripcanvas-place-halos";
-export const PLACE_DOT_LAYER_ID = "tripcanvas-place-dots";
-export const PLACE_GLYPH_LAYER_ID = "tripcanvas-place-glyphs";
-export const PLACE_HITBOX_LAYER_ID = "tripcanvas-place-hitbox";
-export const HOTEL_HUB_SOURCE_ID = "tripcanvas-hotel-hub";
-export const HOTEL_HUB_HALO_LAYER_ID = "tripcanvas-hotel-hub-halo";
-export const HOTEL_HUB_DOT_LAYER_ID = "tripcanvas-hotel-hub-dot";
-export const HOTEL_HUB_RING_LAYER_ID = "tripcanvas-hotel-hub-ring";
-export const HOTEL_HUB_GLYPH_LAYER_ID = "tripcanvas-hotel-hub-glyph";
-export const HOTEL_HUB_LABEL_LAYER_ID = "tripcanvas-hotel-hub-label";
+export const RELIABLE_BUILDINGS_LAYER_ID = "astrail-reliable-3d-buildings";
+export const ROUTE_SOURCE_ID = "astrail-routes";
+export const ROUTE_CASING_LAYER_ID = "astrail-routes-casing";
+export const ROUTE_UNDERLAY_LAYER_ID = "astrail-routes-underlay";
+export const ROUTE_ACTIVE_LAYER_ID = "astrail-routes-active";
+export const ROUTE_ACTIVE_DASH_LAYER_ID = "astrail-routes-active-dash";
+export const ROUTE_STOP_SOURCE_ID = "astrail-route-stops";
+export const ROUTE_STOP_HALO_LAYER_ID = "astrail-route-stop-halos";
+export const ROUTE_STOP_NUMBER_LAYER_ID = "astrail-route-stop-numbers";
+export const ROUTE_STOP_LABEL_LAYER_ID = "astrail-route-stop-labels";
+export const PLACE_SOURCE_ID = "astrail-places";
+export const PLACE_CLUSTER_LAYER_ID = "astrail-place-clusters";
+export const PLACE_CLUSTER_COUNT_LAYER_ID = "astrail-place-cluster-counts";
+export const PLACE_CLUSTER_HITBOX_LAYER_ID = "astrail-place-cluster-hitbox";
+export const PLACE_SELECTED_PULSE_LAYER_ID = "astrail-place-selected-pulse";
+export const PLACE_HALO_LAYER_ID = "astrail-place-halos";
+export const PLACE_DOT_LAYER_ID = "astrail-place-dots";
+export const PLACE_GLYPH_LAYER_ID = "astrail-place-glyphs";
+export const PLACE_HITBOX_LAYER_ID = "astrail-place-hitbox";
+export const HOTEL_HUB_SOURCE_ID = "astrail-hotel-hub";
+export const HOTEL_HUB_HALO_LAYER_ID = "astrail-hotel-hub-halo";
+export const HOTEL_HUB_DOT_LAYER_ID = "astrail-hotel-hub-dot";
+export const HOTEL_HUB_RING_LAYER_ID = "astrail-hotel-hub-ring";
+export const HOTEL_HUB_GLYPH_LAYER_ID = "astrail-hotel-hub-glyph";
+export const HOTEL_HUB_LABEL_LAYER_ID = "astrail-hotel-hub-label";
 
 export const ROUTE_DASH_SEQUENCE: number[][] = [
   [0, 4, 3],

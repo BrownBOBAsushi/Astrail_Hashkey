@@ -1,1 +1,1 @@
-"""TripCanvas backend package."""
+"""Astrail backend package."""

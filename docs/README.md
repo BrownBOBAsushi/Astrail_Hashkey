@@ -1,11 +1,11 @@
-# TripCanvas Docs
+# Astrail Docs
 
 This folder keeps planning history and reference notes out of the repo root.
 
 ## Source Of Truth
 
 - `../README.md` - product overview, local run commands, implemented frontend/backend state, and verification commands.
-- `../AGENTS.md` - agent-facing repo rules and TripCanvas product constraints.
+- `../AGENTS.md` - agent-facing repo rules and Astrail product constraints.
 - `../CLAUDE.md` - detailed backend contracts, SSE termination contract, env vars, package layout, and demo guardrails.
 
 ## Reference

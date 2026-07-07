@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the TripCanvas demo show full day route sequencing on Mapbox and make AP2/x402 hotel booking approval visibly human-in-the-loop with wallet explorer links.
+**Goal:** Make the Astrail demo show full day route sequencing on Mapbox and make AP2/x402 hotel booking approval visibly human-in-the-loop with wallet explorer links.
 
 **Architecture:** Keep the existing Next.js and Mapbox GL JS surface. Add focused frontend helpers for route-stop resolution, Mapbox Directions geometry, and payment explorer links, then wire them into `TripMap`, the bottom timeline, the left extracted-place panel, and the right agent approval rail.
 
@@ -29,7 +29,7 @@
 
 **Files:**
 - Modify: `frontend/components/map/TripMap.tsx`
-- Modify: `frontend/components/trip/TripCanvasShell.tsx`
+- Modify: `frontend/components/trip/AstrailShell.tsx`
 - Modify: `frontend/components/trip/TripGenerationShell.tsx`
 
 - [ ] Use all trip places for route planning even when day/category filters hide pins.

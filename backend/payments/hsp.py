@@ -34,9 +34,9 @@ import { HSPClient } from '@hsp/sdk';
 import { resolveChain } from '@hsp/core/chains/index';
 import { getAddress } from 'viem';
 
-const payloadPath = process.env.TRIPCANVAS_HSP_PAYLOAD_PATH;
+const payloadPath = process.env.ASTRAIL_HSP_PAYLOAD_PATH;
 if (!payloadPath) {
-  throw new Error('TRIPCANVAS_HSP_PAYLOAD_PATH is required');
+  throw new Error('ASTRAIL_HSP_PAYLOAD_PATH is required');
 }
 const input = JSON.parse(readFileSync(payloadPath, 'utf8'));
 
@@ -345,7 +345,7 @@ def _write_payload_file(payload: dict[str, Any]) -> Path:
         "w",
         delete=False,
         encoding="utf-8",
-        prefix="tripcanvas-hsp-",
+        prefix="astrail-hsp-",
         suffix=".json",
     ) as fh:
         json.dump(payload, fh, separators=(",", ":"))
@@ -357,7 +357,7 @@ def _write_script_file(sdk_path: Path) -> Path:
         "w",
         delete=False,
         encoding="utf-8",
-        prefix="tripcanvas-hsp-runner-",
+        prefix="astrail-hsp-runner-",
         suffix=".mjs",
         dir=sdk_path,
     ) as fh:
@@ -367,7 +367,7 @@ def _write_script_file(sdk_path: Path) -> Path:
 
 def _hsp_runner_env(payload_path: Path) -> dict[str, str]:
     env = os.environ.copy()
-    env["TRIPCANVAS_HSP_PAYLOAD_PATH"] = str(payload_path)
+    env["ASTRAIL_HSP_PAYLOAD_PATH"] = str(payload_path)
     return env
 
 

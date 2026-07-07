@@ -1,14 +1,14 @@
-# Agentic Payments For TripCanvas
+# Agentic Payments For Astrail
 
 > Current reference as of 2026-06-07. The implementation lives in `backend/payments/`, with compatibility exports through `backend/spike_agentic_payments.py`. The itinerary booking overlay still has the older `PaymentProvider` seam in `backend/spike_booking.py`, but the explicit hotel-booking endpoint flow is `POST /ap2/hotel-booking-mandate` then `POST /hotel-booking`.
 
 ## Decision
 
-TripCanvas will use **AP2-inspired authorization** plus **x402 machine payment** for the hotel booking demo.
+Astrail will use **AP2-inspired authorization** plus **x402 machine payment** for the hotel booking demo.
 
 The product story is:
 
-1. The user gives TripCanvas permission to book a mock hotel within visible constraints.
+1. The user gives Astrail permission to book a mock hotel within visible constraints.
 2. The orchestrator agent chooses a hotel using Reel-extracted places, route efficiency, weather-aware itinerary needs, and user hotel preferences.
 3. The hotel booking agent requires payment before issuing the booking.
 4. The orchestrator pays the hotel booking agent through x402 on a testnet or sandbox network.
@@ -19,29 +19,29 @@ This is intentionally not a production hotel checkout. The goal is to show an en
 
 ## Protocol Roles
 
-| Layer | What It Proves | TripCanvas Usage |
+| Layer | What It Proves | Astrail Usage |
 | --- | --- | --- |
 | AP2 | The user authorized the agent to make a purchase under constraints | Use an AP2-shaped mandate that captures city, dates, guests, max spend, hotel preferences, and mock-booking-only scope |
 | x402 | One machine can pay another over HTTP | The orchestrator wallet pays the hotel agent wallet before `/book` returns a mock booking |
-| TripCanvas | Travel reasoning and demo-safe booking | Extract places from Reels, score hotel bases, show a visible agent audit trail, and return `TC-MOCK-...` booking IDs |
+| Astrail | Travel reasoning and demo-safe booking | Extract places from Reels, score hotel bases, show a visible agent audit trail, and return `ASTRAIL-MOCK-...` booking IDs |
 
-ACP is not in scope for this version. ACP is more relevant when TripCanvas needs a full merchant checkout protocol with catalog, cart, payment credential relay, order lifecycle, refunds, and fulfillment webhooks. For this demo, AP2 plus x402 is narrower and better aligned with agent-to-agent payment.
+ACP is not in scope for this version. ACP is more relevant when Astrail needs a full merchant checkout protocol with catalog, cart, payment credential relay, order lifecycle, refunds, and fulfillment webhooks. For this demo, AP2 plus x402 is narrower and better aligned with agent-to-agent payment.
 
 ## Goals
 
-- Show that TripCanvas is an agentic travel product, not just a map UI.
+- Show that Astrail is an agentic travel product, not just a map UI.
 - Show the user explicitly authorizing autonomous hotel booking constraints.
 - Show a visible agent audit trail: mandate, hotel reasoning, x402 payment, mock booking, itinerary update.
 - Use real x402 mechanics where practical: `402 Payment Required`, payment instructions, orchestrator payment, retry with payment proof, booking response.
 - Keep hotel booking demo-safe with no real hotel reservation, no production card charge, and no real guest PII.
-- Keep the existing Mapbox-first TripCanvas flow intact.
+- Keep the existing Mapbox-first Astrail flow intact.
 
 ## Non-Goals
 
 - No real production hotel booking.
 - No production card payment.
 - No ACP implementation.
-- No full AP2 compliance claim. TripCanvas signs and verifies demo mandates, but this is still AP2-style demo signing rather than a production AP2 credential-provider integration.
+- No full AP2 compliance claim. Astrail signs and verifies demo mandates, but this is still AP2-style demo signing rather than a production AP2 credential-provider integration.
 - No hidden chain-of-thought display. The UI shows user-facing rationale, scores, evidence, and tool/status events.
 - No dependency on a live hotel supplier API for the demo path.
 
@@ -51,7 +51,7 @@ ACP is not in scope for this version. ACP is more relevant when TripCanvas needs
 
 Sets travel dates, Reel URLs, hotel preferences, and booking constraints. The user must approve the booking mandate before the orchestrator can pay.
 
-### TripCanvas Orchestrator Agent
+### Astrail Orchestrator Agent
 
 Owns the trip run. It extracts places, asks the hotel-base optimizer for candidates, plans the itinerary from the selected hotel base, creates the AP2-shaped booking mandate after user approval, pays the hotel booking agent through x402, and returns the mock receipt to the UI.
 
@@ -80,7 +80,7 @@ Verifies and settles the x402 payment payload so the hotel booking agent does no
 
 ### Trusted Surface
 
-The TripCanvas UI surface where the user reviews and approves the mandate. In V1 this can be an explicit confirmation panel. In a stricter AP2 implementation, this would produce signed mandate credentials.
+The Astrail UI surface where the user reviews and approves the mandate. In V1 this can be an explicit confirmation panel. In a stricter AP2 implementation, this would produce signed mandate credentials.
 
 ## Wallets And Environment
 
@@ -88,7 +88,7 @@ Prepare two wallets:
 
 1. **Orchestrator wallet**
    - Buyer wallet.
-   - Held by TripCanvas backend only.
+   - Held by Astrail backend only.
    - Pays the hotel booking agent through x402.
 
 2. **Hotel agent wallet**
@@ -110,8 +110,8 @@ HOTEL_AGENT_PAY_TO=0x...
 
 HOTEL_BOOKING_MODE=mock
 AP2_MODE=disabled
-AP2_DEMO_ISSUER=tripcanvas-demo-trusted-surface
-AP2_DEMO_AUDIENCE=tripcanvas-hotel-booking-agent
+AP2_DEMO_ISSUER=astrail-demo-trusted-surface
+AP2_DEMO_AUDIENCE=astrail-hotel-booking-agent
 AP2_MANDATE_TTL_SECONDS=180
 AP2_DEMO_SIGNING_SECRET=...
 ```
@@ -144,7 +144,7 @@ Hotel fulfillment remains mock-only.
 
 The HashKey hackathon SDK is distributed as a repository, not a published npm
 package. Clone `https://github.com/project-hsp/hsp`, run `npm install` in that
-folder, then set `HSP_SDK_PATH` to the local clone. TripCanvas calls
+folder, then set `HSP_SDK_PATH` to the local clone. Astrail calls
 `@hsp/sdk` from that folder for the signed HSP mandate, x402 EIP-3009
 authorization, facilitator settlement, and coordinator observe step.
 On Windows `.env` files, prefer forward slashes (`C:/tmp/hsp`) because quoted
@@ -214,8 +214,8 @@ payment proof.
 
 ```json
 {
-  "mandate_id": "ap2-demo-tc-osaka-001",
-  "trip_id": "tc-demo-osaka-001",
+  "mandate_id": "ap2-demo-astrail-osaka-001",
+  "trip_id": "astrail-demo-osaka-001",
   "mode": "autonomous",
   "allowed_action": "mock_hotel_booking",
   "city": "Osaka",
@@ -278,7 +278,7 @@ The mock booking receipt should be explicit that it is not a real hotel reservat
 ```json
 {
   "type": "hotel_booking_receipt",
-  "booking_id": "TC-MOCK-HOTEL-8F3A2C",
+  "booking_id": "ASTRAIL-MOCK-HOTEL-8F3A2C",
   "status": "mock_confirmed",
   "is_mock": true,
   "hotel": {
@@ -310,7 +310,7 @@ The mock booking receipt should be explicit that it is not a real hotel reservat
     "tx_hash": "0x..."
   },
   "mandate": {
-    "mandate_id": "ap2-demo-tc-osaka-001",
+    "mandate_id": "ap2-demo-astrail-osaka-001",
     "allowed_action": "mock_hotel_booking",
     "mock_booking_only": true
   },
@@ -338,7 +338,7 @@ Recommended timeline:
    - Show network, payer, payee, amount, and tx hash if available.
 
 5. **Mock booking confirmed**
-   - Show `TC-MOCK-...`, hotel, dates, guests, and mock-only disclaimer.
+   - Show `ASTRAIL-MOCK-...`, hotel, dates, guests, and mock-only disclaimer.
 
 6. **Receipt ready**
    - "The itinerary remains routed from the selected hotel base; the hotel receipt is demo-safe and mock-only."
@@ -395,7 +395,7 @@ Avoid:
 
 2. **Hotel booking agent**
    - Add mock hotel booking service that validates mandate constraints.
-   - Return deterministic `TC-MOCK-HOTEL-...` IDs.
+   - Return deterministic `ASTRAIL-MOCK-HOTEL-...` IDs.
 
 3. **x402 integration**
    - Add real x402 settlement behind the hotel booking payment adapter.

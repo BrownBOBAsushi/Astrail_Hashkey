@@ -31,7 +31,7 @@ export async function requestHotelBookingMandate({
       user_confirmation: {
         confirmed: true,
         button_label: "Confirm Hotel Booking",
-        trusted_surface: "tripcanvas-web",
+        trusted_surface: "astrail-web",
       },
     }),
     signal,

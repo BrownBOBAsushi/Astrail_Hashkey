@@ -2,13 +2,13 @@
 
 ## Context
 
-TripCanvas already has the agentic travel loop up to hotel-base optimization:
+Astrail already has the agentic travel loop up to hotel-base optimization:
 
 1. `/extract` turns Instagram Reel URLs into grounded places.
 2. `/hotel-base` scores base areas and selects two hotel candidates.
 3. `/itinerary` can accept the selected hotel-base result as planning context.
 
-The next feature proves that TripCanvas can perform an agentic payment step after hotel selection. The goal for this run is backend proof, not frontend polish.
+The next feature proves that Astrail can perform an agentic payment step after hotel selection. The goal for this run is backend proof, not frontend polish.
 
 The payment demo is intentionally not a production hotel checkout. It should show an agent receiving user authority, attempting a paid booking action, satisfying a 402/x402-shaped payment requirement, and returning a demo-safe mock receipt.
 
@@ -20,7 +20,7 @@ The first implementation should use simulation-first x402 semantics with the sam
 
 1. The hotel booking agent requires payment before issuing a mock booking.
 2. The first booking attempt yields payment instructions equivalent to `402 Payment Required`.
-3. The TripCanvas orchestrator creates a payment proof bound to the booking attempt.
+3. The Astrail orchestrator creates a payment proof bound to the booking attempt.
 4. The orchestrator retries the booking with the payment proof.
 5. The hotel booking agent returns a deterministic mock receipt.
 
@@ -97,10 +97,10 @@ Request shape:
 
 ```json
 {
-  "trip_id": "tc-demo-osaka-001",
+  "trip_id": "astrail-demo-osaka-001",
   "hotel_base": {},
   "mandate": {
-    "mandate_id": "ap2-demo-tc-osaka-001",
+    "mandate_id": "ap2-demo-astrail-osaka-001",
     "mode": "autonomous",
     "allowed_action": "mock_hotel_booking",
     "city": "Osaka",
@@ -117,7 +117,7 @@ Request shape:
     "requires_user_visible_receipt": true,
     "mock_booking_only": true
   },
-  "idempotency_key": "tc-demo-osaka-001:ap2-demo-tc-osaka-001:hotel_forza_osaka_namba_dotonbori"
+  "idempotency_key": "astrail-demo-osaka-001:ap2-demo-astrail-osaka-001:hotel_forza_osaka_namba_dotonbori"
 }
 ```
 
@@ -159,7 +159,7 @@ Response shape:
   },
   "receipt": {
     "type": "hotel_booking_receipt",
-    "booking_id": "TC-MOCK-HOTEL-8F3A2C",
+    "booking_id": "ASTRAIL-MOCK-HOTEL-8F3A2C",
     "status": "mock_confirmed",
     "is_mock": true,
     "receipt_note": "Demo-safe mock booking. No real hotel reservation was created."
@@ -190,7 +190,7 @@ Responsibilities:
 - Calculate stay nights and estimated total SGD.
 - Refuse if no rooms are available.
 - Refuse if `estimated_total_sgd > mandate.max_total_sgd`.
-- Issue deterministic `TC-MOCK-HOTEL-...` receipt only after valid payment proof.
+- Issue deterministic `ASTRAIL-MOCK-HOTEL-...` receipt only after valid payment proof.
 
 ### x402 Payment Adapter
 
@@ -231,7 +231,7 @@ Failure responses should identify the violated constraint and should not include
 The booking ID should be deterministic:
 
 ```text
-TC-MOCK-HOTEL-{sha1(trip_id|mandate_id|hotel_id|checkin|checkout|guests)[:8].upper()}
+ASTRAIL-MOCK-HOTEL-{sha1(trip_id|mandate_id|hotel_id|checkin|checkout|guests)[:8].upper()}
 ```
 
 The payment simulation tx hash should also be deterministic from the idempotency key and payment request fields. Retrying the same request with the same idempotency key should return the same receipt and tx hash.
@@ -273,10 +273,10 @@ uv run python -m unittest backend.tests.test_agentic_hotel_payments -v
 uv run uvicorn backend.main:app --port 8000
 curl -X POST http://localhost:8000/hotel-booking \
   -H "Content-Type: application/json" \
-  -d '{"trip_id":"tc-demo-osaka-001","idempotency_key":"tc-demo-osaka-001:demo"}'
+  -d '{"trip_id":"astrail-demo-osaka-001","idempotency_key":"astrail-demo-osaka-001:demo"}'
 ```
 
-The curl response should include `payment.status = "simulated"`, a `payment_required` audit event, a `payment_completed` audit event, and a `receipt.booking_id` beginning with `TC-MOCK-HOTEL-`.
+The curl response should include `payment.status = "simulated"`, a `payment_required` audit event, a `payment_completed` audit event, and a `receipt.booking_id` beginning with `ASTRAIL-MOCK-HOTEL-`.
 
 ## Acceptance Criteria
 

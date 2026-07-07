@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` or `superpowers:subagent-driven-development` to implement this plan task-by-task.
 
-**Goal:** Make the TripCanvas Mapbox surface clearly respond when a user selects a recommended place, so the demo reads like an AI-native trip map rather than static pins.
+**Goal:** Make the Astrail Mapbox surface clearly respond when a user selects a recommended place, so the demo reads like an AI-native trip map rather than static pins.
 
 **Design thesis:** A selected place should create three immediate signals: the marker becomes visually dominant, a compact map-attached callout explains the decision, and the active day route reads like the chosen navigation path. Keep the panels minimal and do not add another map engine or backend contract.
 

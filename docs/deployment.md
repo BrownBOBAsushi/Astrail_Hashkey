@@ -1,6 +1,6 @@
-# TripCanvas Deployment
+# Astrail Deployment
 
-TripCanvas is deployed as two services:
+Astrail is deployed as two services:
 
 - Frontend: Vercel, rooted at `frontend/`
 - Backend: Render Web Service, rooted at the repo root

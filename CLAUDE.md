@@ -1,4 +1,4 @@
-# TripCanvas — Claude Code Project Instructions
+# Astrail — Claude Code Project Instructions
 
 ## What we are building
 
@@ -37,9 +37,9 @@ Code freeze: 17:00 SGT. One tight demo loop beats three half-built features.
 | Itinerary planning | `enricher` + `narrator_agent` in `backend/planner/runner.py`, re-exported by `spike_planner.py` (carries `hotel_options` = the 3 recs) |
 | Weather | **Open-Meteo** HTTP (free, no API key, 10k calls/day) wrapped as `function_tool` |
 | **Agentic payment** | **AP2** (Agent Payments Protocol — signed Intent/Cart mandates = authorization) **+ x402** (Coinbase HTTP-402 → `X-PAYMENT` header → facilitator settles USDC = settlement). Explicit hotel-booking flow lives in `backend/payments/`; itinerary booking overlay still uses the `PaymentProvider` seam in `spike_booking.py` |
-| Booking — flights | **Skyscanner deep-link composer** + `TC-MOCK-{sha1[:8]}` id (mock fulfillment). *Duffel sandbox = deprecated optional fallback, only if `DUFFEL_TEST_TOKEN` set* |
-| Booking — hotels | **Booking.com search-URL composer** (no auth) + `TC-MOCK-{sha1[:8]}` id |
-| Booking — attractions | **Klook search-URL composer** (no auth) + `TC-MOCK-{sha1[:8]}` id |
+| Booking — flights | **Skyscanner deep-link composer** + `ASTRAIL-MOCK-{sha1[:8]}` id (mock fulfillment). *Duffel sandbox = deprecated optional fallback, only if `DUFFEL_TEST_TOKEN` set* |
+| Booking — hotels | **Booking.com search-URL composer** (no auth) + `ASTRAIL-MOCK-{sha1[:8]}` id |
+| Booking — attractions | **Klook search-URL composer** (no auth) + `ASTRAIL-MOCK-{sha1[:8]}` id |
 | Booking overlay | Pydantic `BookingResult` with `is_mock=True` on every item; each item carries an optional `settlement` (AP2/x402 `PaymentSettlement`) |
 | Multi-agent | OpenAI Agents SDK (`uv add openai-agents openai`) — `from agents import Agent, Runner` |
 | Package manager | `uv` (`pyproject.toml` at PROJECT ROOT, not `backend/`) |
@@ -82,8 +82,8 @@ BOOKING_AID           # optional Booking.com affiliate id, may be empty for hack
 # --- Agentic hotel payment endpoint (AP2 + x402) ---
 AP2_MODE              # "disabled" (default) | "demo_signed"
 AP2_DEMO_SIGNING_SECRET  # required only when AP2_MODE=demo_signed
-AP2_DEMO_ISSUER      # default "tripcanvas-demo-trusted-surface"
-AP2_DEMO_AUDIENCE    # default "tripcanvas-hotel-booking-agent"
+AP2_DEMO_ISSUER      # default "astrail-demo-trusted-surface"
+AP2_DEMO_AUDIENCE    # default "astrail-hotel-booking-agent"
 AP2_MANDATE_TTL_SECONDS  # default 180
 X402_MODE             # "simulation" (default) | "real"
 X402_NETWORK          # default "eip155:84532"
@@ -113,7 +113,7 @@ NEXT_PUBLIC_BACKEND_URL    # defaults to http://localhost:8000
 ## Project File Structure (ground truth — organized compatibility layout)
 
 ```
-tripcanvas/
+astrail/
 ├── pyproject.toml                  # PROJECT ROOT (not backend/)
 ├── backend/
 │   ├── __init__.py                 # package marker; backend imports are package-qualified
@@ -151,7 +151,7 @@ tripcanvas/
     ├── app/trip/page.tsx           # same shell
     ├── components/map/TripMap.tsx
     ├── components/trip/{TripGenerationShell,ReelInputPanel,GenerationTimeline,AgentDecisionRail,BookingFlowPanel}.tsx
-    ├── components/trip/{TripCanvasShell,RightTripPanel,PlaceIntelPanel,SelectedPlaceCard}.tsx
+    ├── components/trip/{AstrailShell,RightTripPanel,PlaceIntelPanel,SelectedPlaceCard}.tsx
     ├── lib/trip/{backend-types,generate-trip,normalize-trip,sse,types,place-intel}.ts
     ├── lib/trip/{generation-state,booking-flow,map-feature-collections,map-layers,map-runtime}.ts
     └── package.json                # mapbox-gl 3.24.0
@@ -341,7 +341,7 @@ class PaymentSettlement(BaseModel):              # NEW — the "real payment" re
     notes: str = ""
 
 class BookingItem(BaseModel):
-    booking_id: str                              # "TC-MOCK-{sha1[:8]}" (mock) | "ord_..." (deprecated Duffel)
+    booking_id: str                              # "ASTRAIL-MOCK-{sha1[:8]}" (mock) | "ord_..." (deprecated Duffel)
     category: Literal["flight", "hotel", "attraction"]
     name: str
     price_estimate_sgd: float | None
@@ -378,11 +378,11 @@ Booking tools (deep-link composers, unchanged shape):
 
 | Tool | Backend | Returns |
 |---|---|---|
-| `book_flight(origin, destination, date)` | Skyscanner deep-link composer (default). *Duffel sandbox only if `DUFFEL_TEST_TOKEN` set — DEPRECATED* | `BookingItem(source="booking_deeplink", status="reserved", booking_id="TC-MOCK-{hash}")` (or `duffel_sandbox`/`confirmed` on the deprecated path) |
-| `book_hotel(city, checkin, checkout, guests)` | Booking.com URL composer | `BookingItem(source="booking_deeplink", status="reserved", booking_id="TC-MOCK-{hash}")` |
-| `book_attraction(name, city)` | Klook URL composer | `BookingItem(source="klook_deeplink", status="reserved", booking_id="TC-MOCK-{hash}")` |
+| `book_flight(origin, destination, date)` | Skyscanner deep-link composer (default). *Duffel sandbox only if `DUFFEL_TEST_TOKEN` set — DEPRECATED* | `BookingItem(source="booking_deeplink", status="reserved", booking_id="ASTRAIL-MOCK-{hash}")` (or `duffel_sandbox`/`confirmed` on the deprecated path) |
+| `book_hotel(city, checkin, checkout, guests)` | Booking.com URL composer | `BookingItem(source="booking_deeplink", status="reserved", booking_id="ASTRAIL-MOCK-{hash}")` |
+| `book_attraction(name, city)` | Klook URL composer | `BookingItem(source="klook_deeplink", status="reserved", booking_id="ASTRAIL-MOCK-{hash}")` |
 
-`TC-MOCK` id formula: `"TC-MOCK-" + sha1(f"{category}|{name}|{date}").hexdigest()[:8]` — deterministic, replayable, idempotent.
+`ASTRAIL-MOCK` id formula: `"ASTRAIL-MOCK-" + sha1(f"{category}|{name}|{date}").hexdigest()[:8]` — deterministic, replayable, idempotent.
 
 Wire-up: `booking_agent` runs in parallel with `narrator_agent` (both depend only on `enriched`). Result merged into `ItineraryOutput.bookings`.
 

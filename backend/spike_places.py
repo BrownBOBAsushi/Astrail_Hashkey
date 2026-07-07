@@ -9,7 +9,7 @@ Verifies:
   4. output_type=ExtractionResult (single Pydantic model) works correctly
 
 Usage:
-    cd /path/to/tripcanvas          # project root (pyproject.toml lives here)
+    cd /path/to/astrail          # project root (pyproject.toml lives here)
     uv run python backend/spike_places.py
 
 Required env vars (in .env at project root):

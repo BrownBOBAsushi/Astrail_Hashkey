@@ -1,5 +1,5 @@
 """
-TripCanvas FastAPI backend — two endpoints per CLAUDE.md file structure.
+Astrail FastAPI backend — two endpoints per CLAUDE.md file structure.
 
 Endpoints:
   POST /extract      reels → places (writes data/places.json as side effect)
@@ -75,7 +75,7 @@ logger = logging.getLogger(__name__)
 
 _HEARTBEAT_INTERVAL = _STREAMING_HEARTBEAT_INTERVAL
 
-app = FastAPI(title="TripCanvas Backend", version="0.1.0")
+app = FastAPI(title="Astrail Backend", version="0.1.0")
 
 
 def _cors_origins() -> list[str]:
@@ -105,7 +105,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "service": "tripcanvas-backend"}
+    return {"status": "ok", "service": "astrail-backend"}
 
 
 # ---------------------------------------------------------------------------

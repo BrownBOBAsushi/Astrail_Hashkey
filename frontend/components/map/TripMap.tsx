@@ -308,7 +308,7 @@ export function TripMap({
       }
 
       console.warn(
-        "[TripCanvas map] Map initialization failed.",
+        "[Astrail map] Map initialization failed.",
         redactMapboxAccessToken(getUnknownErrorMessage(error)),
       );
     });
@@ -457,7 +457,7 @@ export function TripMap({
         }
 
         console.warn(
-          "[TripCanvas map] Directions route unavailable; using shaped route fallback.",
+          "[Astrail map] Directions route unavailable; using shaped route fallback.",
           redactMapboxAccessToken(getUnknownErrorMessage(error)),
         );
         setDirectionsBySignature({});

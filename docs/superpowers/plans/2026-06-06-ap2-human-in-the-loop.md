@@ -6,7 +6,7 @@
 
 **Goal:** Add a minimal demo-grade AP2 signed human confirmation layer before the existing `/hotel-booking` x402 settlement path.
 
-**Architecture:** TripCanvas will keep x402 as the money movement layer and add AP2 as the user-authorization proof layer. The user will explicitly confirm the final hotel booking terms in the frontend; the backend will create and later verify a signed AP2 demo mandate bundle before allowing x402 settlement. This is intentionally a demo implementation, not a production AP2 credential-provider or payment-network integration.
+**Architecture:** Astrail will keep x402 as the money movement layer and add AP2 as the user-authorization proof layer. The user will explicitly confirm the final hotel booking terms in the frontend; the backend will create and later verify a signed AP2 demo mandate bundle before allowing x402 settlement. This is intentionally a demo implementation, not a production AP2 credential-provider or payment-network integration.
 
 **Tech Stack:** FastAPI, Pydantic, Python standard-library HMAC/SHA-256 for demo mandate signatures, existing x402 Python SDK path, Next.js App Router, React 19, TypeScript.
 
@@ -35,7 +35,7 @@ AP2 is the authorization layer. It answers: "What did the human authorize the ag
 
 x402 is the settlement layer. It answers: "Did value move for this HTTP-gated action?"
 
-TripCanvas should show both:
+Astrail should show both:
 
 ```text
 Human confirms final hotel terms
@@ -144,9 +144,9 @@ Add these to `docs/reference/agentic-payments.md` and mention them in `.env` doc
 ```bash
 AP2_MODE=disabled
 AP2_MODE=demo_signed
-AP2_DEMO_SIGNING_SECRET=local-demo-secret-for-tripcanvas-ap2
-AP2_DEMO_ISSUER=tripcanvas-demo-trusted-surface
-AP2_DEMO_AUDIENCE=tripcanvas-hotel-booking-agent
+AP2_DEMO_SIGNING_SECRET=local-demo-secret-for-astrail-ap2
+AP2_DEMO_ISSUER=astrail-demo-trusted-surface
+AP2_DEMO_AUDIENCE=astrail-hotel-booking-agent
 AP2_MANDATE_TTL_SECONDS=300
 ```
 
@@ -165,18 +165,18 @@ Response object:
 
 ```json
 {
-  "format": "tripcanvas-ap2-demo-jws",
+  "format": "astrail-ap2-demo-jws",
   "protected": "base64url-json-header",
   "payload": "base64url-json-payload",
   "signature": "base64url-hmac-sha256",
   "payload_json": {
-    "vct": "tripcanvas.ap2.hotel_booking.confirmation.1",
+    "vct": "astrail.ap2.hotel_booking.confirmation.1",
     "mode": "direct",
-    "issuer": "tripcanvas-demo-trusted-surface",
-    "audience": "tripcanvas-hotel-booking-agent",
-    "mandate_id": "ap2-demo-tc-demo-osaka-001",
-    "trip_id": "tc-demo-osaka-001",
-    "idempotency_key": "tc-demo-osaka-001:ap2-demo-tc-demo-osaka-001:hotel_royal_park_shiodome",
+    "issuer": "astrail-demo-trusted-surface",
+    "audience": "astrail-hotel-booking-agent",
+    "mandate_id": "ap2-demo-astrail-demo-osaka-001",
+    "trip_id": "astrail-demo-osaka-001",
+    "idempotency_key": "astrail-demo-osaka-001:ap2-demo-astrail-demo-osaka-001:hotel_royal_park_shiodome",
     "checkout": {
       "checkout_id": "checkout_hotel_royal_park_shiodome_20260610",
       "checkout_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -208,7 +208,7 @@ Response object:
     "confirmation": {
       "confirmation_id": "ap2_confirm_8e7d4c90a312",
       "confirmed_at": "2026-06-06T04:45:00Z",
-      "trusted_surface": "tripcanvas-web",
+      "trusted_surface": "astrail-web",
       "button_label": "Confirm Hotel Booking"
     },
     "iat": 1780710000,
@@ -220,7 +220,7 @@ Response object:
 
 Implementation notes:
 
-- `protected` header should include `alg="HS256"`, `typ="JWT"`, and `kid="tripcanvas-demo-ap2-v1"`.
+- `protected` header should include `alg="HS256"`, `typ="JWT"`, and `kid="astrail-demo-ap2-v1"`.
 - `payload_json` is included in API responses for demo readability, but verification must use the encoded `protected.payload.signature` fields.
 - Use canonical JSON with sorted keys and compact separators before base64url encoding.
 - `checkout_hash` should be a SHA-256 hash over the canonical checkout object.
@@ -277,11 +277,11 @@ Add to `HotelBookingResponse`:
   "ap2": {
     "status": "verified",
     "mode": "direct",
-    "mandate_id": "ap2-demo-tc-demo-osaka-001",
+    "mandate_id": "ap2-demo-astrail-demo-osaka-001",
     "checkout_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
     "confirmation_id": "ap2_confirm_8e7d4c90a312",
     "confirmed_at": "2026-06-06T04:45:00Z",
-    "issuer": "tripcanvas-demo-trusted-surface"
+    "issuer": "astrail-demo-trusted-surface"
   }
 }
 ```
@@ -293,7 +293,7 @@ Add to `HotelBookingReceipt`:
   "ap2": {
     "status": "verified",
     "mode": "direct",
-    "mandate_id": "ap2-demo-tc-demo-osaka-001",
+    "mandate_id": "ap2-demo-astrail-demo-osaka-001",
     "checkout_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
     "confirmation_id": "ap2_confirm_8e7d4c90a312"
   }
@@ -333,14 +333,14 @@ Request:
 
 ```json
 {
-  "trip_id": "tc-demo-osaka-001",
+  "trip_id": "astrail-demo-osaka-001",
   "hotel_base": {},
   "mandate": {},
-  "idempotency_key": "tc-demo-osaka-001:ap2-demo-tc-demo-osaka-001:hotel_royal_park_shiodome",
+  "idempotency_key": "astrail-demo-osaka-001:ap2-demo-astrail-demo-osaka-001:hotel_royal_park_shiodome",
   "user_confirmation": {
     "confirmed": true,
     "button_label": "Confirm Hotel Booking",
-    "trusted_surface": "tripcanvas-web"
+    "trusted_surface": "astrail-web"
   }
 }
 ```
@@ -353,7 +353,7 @@ Response:
   "ap2": {
     "status": "created",
     "mode": "direct",
-    "mandate_id": "ap2-demo-tc-demo-osaka-001",
+    "mandate_id": "ap2-demo-astrail-demo-osaka-001",
     "checkout_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
     "confirmation_id": "ap2_confirm_8e7d4c90a312",
     "signed_mandate": {}
@@ -388,10 +388,10 @@ Extend request:
 
 ```json
 {
-  "trip_id": "tc-demo-osaka-001",
+  "trip_id": "astrail-demo-osaka-001",
   "hotel_base": {},
   "mandate": {},
-  "idempotency_key": "tc-demo-osaka-001:ap2-demo-tc-demo-osaka-001:hotel_royal_park_shiodome",
+  "idempotency_key": "astrail-demo-osaka-001:ap2-demo-astrail-demo-osaka-001:hotel_royal_park_shiodome",
   "ap2_signed_mandate": {}
 }
 ```
@@ -478,13 +478,13 @@ def test_ap2_demo_mandate_creation_returns_signed_bundle(self):
             user_confirmation={
                 "confirmed": True,
                 "button_label": "Confirm Hotel Booking",
-                "trusted_surface": "tripcanvas-web",
+                "trusted_surface": "astrail-web",
             },
         )
 
     self.assertEqual(response.status, "signed")
     self.assertEqual(response.ap2.status, "created")
-    self.assertEqual(response.ap2.signed_mandate.payload_json["vct"], "tripcanvas.ap2.hotel_booking.confirmation.1")
+    self.assertEqual(response.ap2.signed_mandate.payload_json["vct"], "astrail.ap2.hotel_booking.confirmation.1")
     self.assertEqual(response.ap2.signed_mandate.payload_json["checkout"]["hotel_id"], "hotel_royal_park_shiodome")
 ```
 
@@ -509,11 +509,11 @@ Add models:
 class AP2UserConfirmation(BaseModel):
     confirmed: bool = False
     button_label: str
-    trusted_surface: str = "tripcanvas-web"
+    trusted_surface: str = "astrail-web"
 
 
 class AP2SignedMandate(BaseModel):
-    format: Literal["tripcanvas-ap2-demo-jws"] = "tripcanvas-ap2-demo-jws"
+    format: Literal["astrail-ap2-demo-jws"] = "astrail-ap2-demo-jws"
     protected: str
     payload: str
     signature: str
@@ -603,7 +603,7 @@ def test_ap2_tampered_mandate_rejects_before_x402(self):
             user_confirmation={
                 "confirmed": True,
                 "button_label": "Confirm Hotel Booking",
-                "trusted_surface": "tripcanvas-web",
+                "trusted_surface": "astrail-web",
             },
         ).ap2.signed_mandate
         tampered = signed.model_copy(
@@ -712,7 +712,7 @@ def test_ap2_hotel_booking_mandate_endpoint_signs_preview(self):
                 "user_confirmation": {
                     "confirmed": True,
                     "button_label": "Confirm Hotel Booking",
-                    "trusted_surface": "tripcanvas-web",
+                    "trusted_surface": "astrail-web",
                 },
             },
         )
@@ -780,7 +780,7 @@ Add:
 
 ```ts
 export type AP2SignedMandate = {
-  format: "tripcanvas-ap2-demo-jws";
+  format: "astrail-ap2-demo-jws";
   protected: string;
   payload: string;
   signature: string;
@@ -960,22 +960,22 @@ async function handleConfirmHotelBooking() {
   setHotelPaymentState((state) => ({ ...state, isRunning: true, error: null }));
   try {
     const mandateResponse = await createHotelBookingMandate({
-      trip_id: "tc-demo-osaka-001",
+      trip_id: "astrail-demo-osaka-001",
       hotel_base: activeTrip.hotelBase,
-      idempotency_key: `tc-demo-osaka-001:${activeTrip.hotelBase.selected_hotel_id}:demo`,
+      idempotency_key: `astrail-demo-osaka-001:${activeTrip.hotelBase.selected_hotel_id}:demo`,
       user_confirmation: {
         confirmed: true,
         button_label: "Confirm Hotel Booking",
-        trusted_surface: "tripcanvas-web",
+        trusted_surface: "astrail-web",
       },
     });
     if (!mandateResponse.ap2?.signed_mandate) {
       throw new Error(mandateResponse.error?.message || "AP2 mandate was not signed.");
     }
     const bookingResponse = await bookHotelWithAp2Mandate({
-      trip_id: "tc-demo-osaka-001",
+      trip_id: "astrail-demo-osaka-001",
       hotel_base: activeTrip.hotelBase,
-      idempotency_key: `tc-demo-osaka-001:${activeTrip.hotelBase.selected_hotel_id}:demo`,
+      idempotency_key: `astrail-demo-osaka-001:${activeTrip.hotelBase.selected_hotel_id}:demo`,
       ap2_signed_mandate: mandateResponse.ap2.signed_mandate,
     });
     setHotelPaymentState((state) => ({
@@ -1093,7 +1093,7 @@ Only run after the wallet is funded and the user explicitly approves spending an
 
 ```bash
 AP2_MODE=demo_signed \
-AP2_DEMO_SIGNING_SECRET=local-demo-secret-for-tripcanvas-ap2 \
+AP2_DEMO_SIGNING_SECRET=local-demo-secret-for-astrail-ap2 \
 X402_MODE=real \
 X402_NETWORK=eip155:84532 \
 HOTEL_BOOKING_MODE=mock \
@@ -1146,7 +1146,7 @@ They confirmed a specific mock hotel checkout.
 AP2 signed the human confirmation.
 The backend verified the AP2 mandate.
 x402 settled the agent payment.
-TripCanvas issued a mock hotel receipt.
+Astrail issued a mock hotel receipt.
 ```
 
 ## Rollback Plan

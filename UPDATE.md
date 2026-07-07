@@ -1,14 +1,14 @@
-# TripCanvas HashKey HSP Handoff Update
+# Astrail HashKey HSP Handoff Update
 
 ## Why This File Exists
 
-The user is moving TripCanvas into a new equivalent fork because the HashKey Chain Japan hackathon does not allow repositories created before June 19. The original TripCanvas work started on June 6, so future execution may happen in a new repo with the same codebase shape but fresh history.
+The user is moving Astrail into a new equivalent fork because the HashKey Chain Japan hackathon does not allow repositories created before June 19. The original Astrail work started on June 6, so future execution may happen in a new repo with the same codebase shape but fresh history.
 
 Use this file to restore context in a new session or fork. It intentionally contains no private key and no HSP API key.
 
 ## Current Product Direction
 
-TripCanvas should be positioned for this hackathon as:
+Astrail should be positioned for this hackathon as:
 
 ```text
 AI travel agent -> AP2 approval -> HashKey HSP + x402 testnet payment -> verifiable receipt
@@ -24,7 +24,7 @@ The product is not "just a map." The prize story is agentic commerce:
 
 ## Repo Constraints
 
-Do not rewrite the TripCanvas experience.
+Do not rewrite the Astrail experience.
 
 Keep:
 

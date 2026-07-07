@@ -307,7 +307,7 @@
         }
       },
       {
-        "booking_id": "TC-MOCK-1c00dc23",
+        "booking_id": "ASTRAIL-MOCK-1c00dc23",
         "category": "hotel",
         "name": "The Royal Park Hotel Iconic Tokyo Shiodome",
         "price_estimate_sgd": null,
@@ -327,7 +327,7 @@
         }
       },
       {
-        "booking_id": "TC-MOCK-238b9e4c",
+        "booking_id": "ASTRAIL-MOCK-238b9e4c",
         "category": "attraction",
         "name": "Tokyo Dream Park",
         "price_estimate_sgd": null,
@@ -347,7 +347,7 @@
         }
       },
       {
-        "booking_id": "TC-MOCK-ef86652f",
+        "booking_id": "ASTRAIL-MOCK-ef86652f",
         "category": "attraction",
         "name": "Harry Potter Cafe",
         "price_estimate_sgd": null,
@@ -367,7 +367,7 @@
         }
       },
       {
-        "booking_id": "TC-MOCK-df8ec8d1",
+        "booking_id": "ASTRAIL-MOCK-df8ec8d1",
         "category": "attraction",
         "name": "SANDO LAB TOKYO",
         "price_estimate_sgd": null,
@@ -387,7 +387,7 @@
         }
       },
       {
-        "booking_id": "TC-MOCK-39194619",
+        "booking_id": "ASTRAIL-MOCK-39194619",
         "category": "attraction",
         "name": "Popo",
         "price_estimate_sgd": null,

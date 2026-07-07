@@ -2,13 +2,13 @@
 
 ## Context
 
-TripCanvas turns saved Instagram Reels into a mapped travel plan. The backend already has real agent work under the hood: Reel extraction, place grounding, live enrichment, weather, booking, and itinerary narration. The current product risk is that the demo can still look like a normal form-to-itinerary app because too much agent decision-making is hidden behind broad status messages.
+Astrail turns saved Instagram Reels into a mapped travel plan. The backend already has real agent work under the hood: Reel extraction, place grounding, live enrichment, weather, booking, and itinerary narration. The current product risk is that the demo can still look like a normal form-to-itinerary app because too much agent decision-making is hidden behind broad status messages.
 
 The redesigned flow should make the agent's travel judgment visible without cluttering the map. The most important product story is not "a nice map." It is "the agent turns messy saved Reels into real places, chooses an efficient hotel base, adapts the schedule to weather, and explains its decisions."
 
 ## Visual Thesis
 
-TripCanvas should feel like a minimal futuristic travel cockpit: cinematic enough to be memorable, restrained enough to keep the map, evidence, and agent decisions readable.
+Astrail should feel like a minimal futuristic travel cockpit: cinematic enough to be memorable, restrained enough to keep the map, evidence, and agent decisions readable.
 
 ## Product Thesis
 
@@ -67,7 +67,7 @@ The core AI-native decision is hotel-base optimization. After the agent extracts
 
 Visible:
 - Globe.
-- TripCanvas orbit typography.
+- Astrail orbit typography.
 - Click-to-begin prompt.
 
 Hidden:
@@ -270,7 +270,7 @@ The planner should also include:
 
 ### Landing
 
-Full-bleed, no cards. Slow globe in the center, sparse starfield, `TRIPCANVAS` orbiting or arranged around the globe. Use one warm accent and restrained teal secondary details. The only action is click anywhere to begin.
+Full-bleed, no cards. Slow globe in the center, sparse starfield, `ASTRAIL` orbiting or arranged around the globe. Use one warm accent and restrained teal secondary details. The only action is click anywhere to begin.
 
 ### Input
 

@@ -2,13 +2,13 @@
 
 ## Context
 
-TripCanvas is an AI-native travel planner for the OpenAI SEA hackathon. The backend flow is owned separately and already exposes the important contract: users submit Instagram Reel URLs and trip preferences, `/extract` returns grounded places, `/hotel-base` can stream base-area decisions, and `/itinerary` streams the final day-by-day plan.
+Astrail is an AI-native travel planner for the OpenAI SEA hackathon. The backend flow is owned separately and already exposes the important contract: users submit Instagram Reel URLs and trip preferences, `/extract` returns grounded places, `/hotel-base` can stream base-area decisions, and `/itinerary` streams the final day-by-day plan.
 
 The frontend already has the right bones: Next.js App Router, Mapbox GL JS, a globe-to-map generation shell, streaming panels, place intel, hotel-base UI, route layers, selected-place camera movement, and fallback source badges. The redesign should therefore be a focused presentation and interaction pass, not a rewrite.
 
 ## Mapbox Notes
 
-Mapbox GL JS supports the interaction model TripCanvas needs:
+Mapbox GL JS supports the interaction model Astrail needs:
 
 - Use `mapbox://styles/mapbox/standard` with `config.basemap` for a configurable Standard style.
 - Use `projection: "globe"` for the opening globe and switch to mercator for the tilted trip map.

@@ -2,7 +2,7 @@
 
 ## Context
 
-TripCanvas already has a backend hotel booking payment proof path:
+Astrail already has a backend hotel booking payment proof path:
 
 1. `POST /hotel-booking` normalizes a selected hotel and AP2-shaped `BookingMandate`.
 2. The hotel booking service returns x402-style payment instructions.
@@ -33,7 +33,7 @@ The booking remains mock-only. AP2 proves that the user confirmed a specific moc
 - No browser WebCrypto signing.
 - No frontend hotel payment panel in this sprint.
 - No real hotel fulfillment.
-- No claim that TripCanvas is production AP2 compliant.
+- No claim that Astrail is production AP2 compliant.
 - No replacement of x402. AP2 is layered above x402 as authorization proof.
 
 ## API Design
@@ -46,14 +46,14 @@ Request shape:
 
 ```json
 {
-  "trip_id": "tc-demo-osaka-001",
+  "trip_id": "astrail-demo-osaka-001",
   "hotel_base": {},
   "mandate": {},
-  "idempotency_key": "tc-demo-osaka-001:ap2-demo-tc-osaka-001:hotel_royal_park_shiodome",
+  "idempotency_key": "astrail-demo-osaka-001:ap2-demo-astrail-osaka-001:hotel_royal_park_shiodome",
   "user_confirmation": {
     "confirmed": true,
     "button_label": "Confirm Hotel Booking",
-    "trusted_surface": "tripcanvas-web"
+    "trusted_surface": "astrail-web"
   }
 }
 ```
@@ -66,11 +66,11 @@ Response shape:
   "ap2": {
     "status": "created",
     "mode": "direct",
-    "mandate_id": "ap2-demo-tc-osaka-001",
+    "mandate_id": "ap2-demo-astrail-osaka-001",
     "checkout_hash": "sha256:...",
     "confirmation_id": "ap2_confirm_...",
     "confirmed_at": "2026-06-06T04:45:00Z",
-    "issuer": "tripcanvas-demo-trusted-surface",
+    "issuer": "astrail-demo-trusted-surface",
     "signed_mandate": {}
   },
   "preview": {
@@ -104,11 +104,11 @@ Add optional AP2 summaries to the existing response and receipt:
   "ap2": {
     "status": "verified",
     "mode": "direct",
-    "mandate_id": "ap2-demo-tc-osaka-001",
+    "mandate_id": "ap2-demo-astrail-osaka-001",
     "checkout_hash": "sha256:...",
     "confirmation_id": "ap2_confirm_...",
     "confirmed_at": "2026-06-06T04:45:00Z",
-    "issuer": "tripcanvas-demo-trusted-surface"
+    "issuer": "astrail-demo-trusted-surface"
   }
 }
 ```
@@ -119,7 +119,7 @@ Use a compact JWS-like shape:
 
 ```json
 {
-  "format": "tripcanvas-ap2-demo-jws",
+  "format": "astrail-ap2-demo-jws",
   "protected": "base64url-json-header",
   "payload": "base64url-json-payload",
   "signature": "base64url-hmac-sha256",
@@ -133,13 +133,13 @@ Header:
 {
   "alg": "HS256",
   "typ": "JWT",
-  "kid": "tripcanvas-demo-ap2-v1"
+  "kid": "astrail-demo-ap2-v1"
 }
 ```
 
 Payload fields:
 
-- `vct="tripcanvas.ap2.hotel_booking.confirmation.1"`
+- `vct="astrail.ap2.hotel_booking.confirmation.1"`
 - `mode="direct"`
 - `issuer`
 - `audience`
@@ -164,8 +164,8 @@ Default AP2 environment:
 
 ```bash
 AP2_MODE=disabled
-AP2_DEMO_ISSUER=tripcanvas-demo-trusted-surface
-AP2_DEMO_AUDIENCE=tripcanvas-hotel-booking-agent
+AP2_DEMO_ISSUER=astrail-demo-trusted-surface
+AP2_DEMO_AUDIENCE=astrail-hotel-booking-agent
 AP2_MANDATE_TTL_SECONDS=180
 ```
 

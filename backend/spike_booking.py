@@ -1,4 +1,4 @@
-"""booking_agent — DEMO-SAFE bookings + agentic payment for the TripCanvas demo.
+"""booking_agent — DEMO-SAFE bookings + agentic payment for the Astrail demo.
 
 Bookings are MOCK fulfillment (deep links). The headline is the AGENTIC PAYMENT:
 AP2 (Agent Payments Protocol — signed Intent/Cart mandates = authorization) +
@@ -264,7 +264,7 @@ async def _settle_item(
 def _mock_booking_id(category: str, *parts: str) -> str:
     """Deterministic, replayable mock id. Same inputs -> same id."""
     key = "|".join([category, *parts])
-    return "TC-MOCK-" + hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
+    return "ASTRAIL-MOCK-" + hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
 
 
 def _booking_com_url(city: str, checkin: str, checkout: str, guests: int) -> str:
@@ -376,7 +376,7 @@ async def _duffel_book_flight(
                     "type": "adult", "title": "mr",
                     "given_name": "Demo", "family_name": "User",
                     "born_on": "1990-01-01", "gender": "m",
-                    "email": "demo@tripcanvas.dev", "phone_number": "+6512345678",
+                    "email": "demo@astrail.dev", "phone_number": "+6512345678",
                 }],
                 "payments": [{
                     "type": "balance",

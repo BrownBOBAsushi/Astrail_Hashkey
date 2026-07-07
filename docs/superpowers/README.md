@@ -1,6 +1,6 @@
 # Superpowers Planning Archive
 
-This directory stores historical specs and implementation plans created during the TripCanvas sprint.
+This directory stores historical specs and implementation plans created during the Astrail sprint.
 
 Use these files for execution history and rationale, not as the primary current-state docs. Some older files describe now-stale assumptions, including the previous flat backend layout, missing AP2 UI, or future-tense Mapbox frontend work.
 

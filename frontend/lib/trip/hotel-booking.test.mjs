@@ -36,12 +36,12 @@ test.afterEach(() => {
 });
 
 const signedMandate = {
-  format: "tripcanvas-ap2-demo-jws",
+  format: "astrail-ap2-demo-jws",
   protected: "protected-header",
   payload: "signed-payload",
   signature: "signature",
   payload_json: {
-    mandate_id: "ap2-demo-tc-demo-osaka-001",
+    mandate_id: "ap2-demo-astrail-demo-osaka-001",
   },
 };
 
@@ -66,7 +66,7 @@ test("requestHotelBookingMandate posts the canonical demo AP2 confirmation paylo
 
   const hotelBooking = await importHotelBookingModule();
   const result = await hotelBooking.requestHotelBookingMandate({
-    tripId: "tc-demo-osaka-001",
+    tripId: "astrail-demo-osaka-001",
   });
 
   assert.equal(result.status, "signed");
@@ -76,11 +76,11 @@ test("requestHotelBookingMandate posts the canonical demo AP2 confirmation paylo
   assert.equal(calls[0].init.headers["Content-Type"], "application/json");
   assert.equal(calls[0].init.headers.Accept, "application/json");
   assert.deepEqual(JSON.parse(calls[0].init.body), {
-    trip_id: "tc-demo-osaka-001",
+    trip_id: "astrail-demo-osaka-001",
     user_confirmation: {
       confirmed: true,
       button_label: "Confirm Hotel Booking",
-      trusted_surface: "tripcanvas-web",
+      trusted_surface: "astrail-web",
     },
   });
 });
@@ -95,7 +95,7 @@ test("submitHotelBooking sends the signed mandate without frontend hotel-base me
       json: async () => ({
         status: "mock_confirmed",
         payment: { status: "simulated" },
-        receipt: { booking_id: "TC-MOCK-HOTEL-123" },
+        receipt: { booking_id: "ASTRAIL-MOCK-HOTEL-123" },
         error: null,
       }),
     };
@@ -103,7 +103,7 @@ test("submitHotelBooking sends the signed mandate without frontend hotel-base me
 
   const hotelBooking = await importHotelBookingModule();
   const result = await hotelBooking.submitHotelBooking({
-    tripId: "tc-demo-osaka-001",
+    tripId: "astrail-demo-osaka-001",
     signedMandate,
   });
 
@@ -111,7 +111,7 @@ test("submitHotelBooking sends the signed mandate without frontend hotel-base me
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, "http://backend.test/hotel-booking");
   assert.deepEqual(JSON.parse(calls[0].init.body), {
-    trip_id: "tc-demo-osaka-001",
+    trip_id: "astrail-demo-osaka-001",
     ap2_signed_mandate: signedMandate,
   });
 });
@@ -133,7 +133,7 @@ test("submitHotelBooking returns rejected backend responses for the UI to show",
 
   const hotelBooking = await importHotelBookingModule();
   const result = await hotelBooking.submitHotelBooking({
-    tripId: "tc-demo-osaka-001",
+    tripId: "astrail-demo-osaka-001",
     signedMandate,
   });
 
@@ -158,7 +158,7 @@ test("requestHotelBookingMandate rejects a signed response without a signed mand
   const hotelBooking = await importHotelBookingModule();
 
   await assert.rejects(
-    () => hotelBooking.requestHotelBookingMandate({ tripId: "tc-demo-osaka-001" }),
+    () => hotelBooking.requestHotelBookingMandate({ tripId: "astrail-demo-osaka-001" }),
     /signed AP2 mandate/,
   );
 });

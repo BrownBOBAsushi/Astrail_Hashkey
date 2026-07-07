@@ -24,7 +24,7 @@ type RightPanelRendererContext = {
   days: TripExperience["days"];
 };
 
-type TripCanvasShellProps = {
+type AstrailShellProps = {
   trip: TripExperience;
   hotelBase?: TripHotelBase;
   dataNotice?: string;
@@ -34,7 +34,7 @@ type TripCanvasShellProps = {
   onRequestRegenerateDay?: (day: number) => void;
 };
 
-export function TripCanvasShell({
+export function AstrailShell({
   trip,
   hotelBase,
   dataNotice,
@@ -42,7 +42,7 @@ export function TripCanvasShell({
   lockedPlaceIds,
   onTogglePlaceLock,
   onRequestRegenerateDay,
-}: TripCanvasShellProps) {
+}: AstrailShellProps) {
   const mapboxToken = readPublicMapboxToken();
   const activeHotelBase = hotelBase ?? trip.hotelBase;
   const [selectedDay, setSelectedDay] = useState<DayFilter>("all");
@@ -246,7 +246,7 @@ function MissingMapboxToken() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-amber-200">
             Map token required
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">TripCanvas needs Mapbox</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Astrail needs Mapbox</h1>
           <p className="mt-4 text-sm leading-6 text-slate-300">
             Add a public Mapbox token to{" "}
             <code className="rounded bg-white/10 px-1.5 py-1 text-amber-100">

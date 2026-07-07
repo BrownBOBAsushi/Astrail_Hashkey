@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Revamp the TripCanvas frontend into a minimal AI-native Mapbox travel planning demo that makes agent decisions, evidence, selected locations, routes, and booking handoff clear.
+**Goal:** Revamp the Astrail frontend into a minimal AI-native Mapbox travel planning demo that makes agent decisions, evidence, selected locations, routes, and booking handoff clear.
 
 **Architecture:** Keep the existing Next.js App Router frontend and Mapbox GL JS map. Add small pure helper functions for agent-facing copy, adjust existing components in place, and update Mapbox GeoJSON styling to dim non-selected places while emphasizing the selected stop and route. Do not touch backend contracts or add new dependencies.
 
@@ -22,7 +22,7 @@ Modify:
 - `frontend/package.json`: Add a `test:unit` script for local pure helper tests.
 - `frontend/components/map/TripMap.tsx`: Add selected-place dimming, selected-day route emphasis, and slightly quieter map chrome.
 - `frontend/components/trip/TripGenerationShell.tsx`: Remove the click-through landing gate, use the new helper functions, sharpen the stage timeline, and add a final approval/payment placeholder.
-- `frontend/components/trip/TripCanvasShell.tsx`: Pass selected-place route context into the map without changing backend data.
+- `frontend/components/trip/AstrailShell.tsx`: Pass selected-place route context into the map without changing backend data.
 - `frontend/components/trip/LeftTripPanel.tsx`: Reduce visual density and foreground destination, days, hotel base, and filters.
 - `frontend/components/trip/RightTripPanel.tsx`: Rename tabs around AI-native language and keep the agent panel central.
 - `frontend/components/trip/PlaceIntelPanel.tsx`: Reframe selected-place details as "why chosen", "what to do", "evidence", and "travel fit".
@@ -177,7 +177,7 @@ Expected: all tests pass.
 **Files:**
 
 - Modify: `frontend/components/map/TripMap.tsx`
-- Modify: `frontend/components/trip/TripCanvasShell.tsx`
+- Modify: `frontend/components/trip/AstrailShell.tsx`
 
 - [ ] **Step 1: Extend map feature properties**
 

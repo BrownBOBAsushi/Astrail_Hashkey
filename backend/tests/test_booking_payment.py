@@ -39,7 +39,7 @@ class _LyingProvider(PaymentProvider):
 
 def _item(**overrides) -> BookingItem:
     base = dict(
-        booking_id="TC-MOCK-deadbeef",
+        booking_id="ASTRAIL-MOCK-deadbeef",
         category="hotel",
         name="Test Hotel",
         price_estimate_sgd=123.45,
@@ -57,7 +57,7 @@ class MockSettlementProviderTests(unittest.TestCase):
     def test_settle_returns_mock_ap2_x402_settlement(self) -> None:
         provider = MockSettlementProvider()
         settlement = asyncio.run(
-            provider.settle(reference="TC-MOCK-abc", amount_sgd=100.0, category="hotel", name="X")
+            provider.settle(reference="ASTRAIL-MOCK-abc", amount_sgd=100.0, category="hotel", name="X")
         )
         self.assertIsInstance(settlement, PaymentSettlement)
         self.assertEqual(settlement.payment_protocol, "ap2_x402")
@@ -171,8 +171,8 @@ class BookTripAttachmentTests(unittest.TestCase):
         # A model output that wrongly marks a klook item "confirmed" — must be demoted,
         # and a lying provider's "settled" must be coerced to "mock".
         items = [
-            _item(booking_id="TC-MOCK-h", category="hotel", source="booking_deeplink", status="reserved"),
-            _item(booking_id="TC-MOCK-a", category="attraction", name="A",
+            _item(booking_id="ASTRAIL-MOCK-h", category="hotel", source="booking_deeplink", status="reserved"),
+            _item(booking_id="ASTRAIL-MOCK-a", category="attraction", name="A",
                   source="klook_deeplink", status="confirmed",
                   book_url="https://www.klook.com/search/?keyword=A"),
         ]

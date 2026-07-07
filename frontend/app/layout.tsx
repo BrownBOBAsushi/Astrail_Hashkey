@@ -3,7 +3,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TripCanvas",
+  title: "Astrail",
   description: "AI-native travel planner",
 };
 

@@ -1,10 +1,10 @@
-# TripCanvas
+# Astrail
 
-TripCanvas is an AI-native travel agent that turns saved Instagram travel Reels
+Astrail is an AI-native travel agent that turns saved Instagram travel Reels
 into a mapped itinerary, a hotel decision, and a human-approved on-chain payment
 proof.
 
-The first TripCanvas build won **2nd place at the SEA x OpenAI Regional Codex
+The first Astrail build won **2nd place at the SEA x OpenAI Regional Codex
 Hackathon in Singapore**. That version demonstrated the agentic travel and
 payment flow on a Base testnet rail. This repository is the HashKey Chain Japan
 hackathon build: the same Mapbox-first travel agent experience, now extended to
@@ -12,15 +12,17 @@ execute **HashKey HSP + x402 testnet USDC payments on HashKey Chain testnet**.
 
 Built by Year 1 students from the Singapore Institute of Technology.
 
+Website: https://astrail.xyz/
+
 ## What It Does
 
-TripCanvas starts from messy travel inspiration, not a fixed destination form.
+Astrail starts from messy travel inspiration, not a fixed destination form.
 A user provides Instagram Reel URLs, travel dates, budget, origin city, and
 free-text preferences. Backend agents extract real places, research tradeoffs,
 recommend a hotel base, build a day-by-day itinerary, and prepare a constrained
 hotel payment flow.
 
-The frontend renders the result as a Mapbox 3D trip canvas. Users can inspect
+The frontend renders the result as a Mapbox 3D travel canvas. Users can inspect
 detected places, route legs, hotel reasoning, source evidence, and payment state
 before approving the final action.
 
@@ -33,7 +35,7 @@ receipt.
 
 1. Paste 3-4 Instagram Reel URLs, dates, budget, origin city, and travel
    preferences.
-2. TripCanvas extracts real places from Reel content and geocodes them.
+2. Astrail extracts real places from Reel content and geocodes them.
 3. The Mapbox globe zooms into the destination as soon as places are grounded.
 4. Agents research place fit, weather, route feasibility, hotel-base tradeoffs,
    and itinerary timing.
@@ -41,7 +43,7 @@ receipt.
    an AI explanation panel.
 6. The user approves an AP2-style mandate for one bounded mock hotel-booking
    action.
-7. TripCanvas executes a HashKey HSP + x402 testnet USDC payment.
+7. Astrail executes a HashKey HSP + x402 testnet USDC payment.
 8. The receipt shows mock hotel fulfillment plus verifiable HashKey Chain
    transaction proof.
 
@@ -53,7 +55,7 @@ For demo reliability, the UI also includes:
 
 ## Why This Is AI-Native
 
-TripCanvas is designed around agentic operations, not AI autocomplete.
+Astrail is designed around agentic operations, not AI autocomplete.
 
 - **Messy input becomes structured action:** saved Reels become real mapped
   places, a hotel base, an itinerary, and a payment handoff.
@@ -69,7 +71,7 @@ TripCanvas is designed around agentic operations, not AI autocomplete.
 
 ## Payment Architecture
 
-TripCanvas separates payment from booking fulfillment.
+Astrail separates payment from booking fulfillment.
 
 - **AP2-style mandate:** the user approves a specific hotel-booking action under
   visible constraints.
@@ -77,7 +79,7 @@ TripCanvas separates payment from booking fulfillment.
   the HashKey HSP sandbox.
 - **x402 settlement:** the payer wallet signs the x402 EIP-3009 payment and the
   facilitator settles testnet USDC on HashKey Chain testnet.
-- **Mock hotel receipt:** TripCanvas returns a `TC-MOCK-HOTEL-*` receipt and
+- **Mock hotel receipt:** Astrail returns a `ASTRAIL-MOCK-HOTEL-*` receipt and
   clearly labels that no real hotel reservation was created.
 
 Supported payment modes:
@@ -176,7 +178,7 @@ Instagram Reels + traveler preferences
   -> hotel-base agent chooses base area and hotel candidate
   -> planner agents research weather, routing, timing, and preferences
   -> itinerary JSON + payment context
-  -> Mapbox 3D trip canvas
+  -> Mapbox 3D travel canvas
   -> AP2-style user approval
   -> HashKey HSP + x402 testnet USDC payment
   -> mock hotel receipt + HashKey explorer proof
@@ -262,7 +264,7 @@ npm install
 ## Demo Script
 
 1. Start backend on `8000` and frontend on `3000`.
-2. Open TripCanvas.
+2. Open Astrail.
 3. Click **Demo Reels** or paste test Reel URLs.
 4. Use **Backend Cache** for the fastest live demo path.
 5. Show the map zoom, extracted places, selected route leg, hotel base, and AI
@@ -278,7 +280,7 @@ npm install
 **AI-native product:** the workflow starts from unstructured social media and
 turns it into a mapped travel plan plus constrained action.
 
-**Operational depth:** TripCanvas models the work a travel planner would do:
+**Operational depth:** Astrail models the work a travel planner would do:
 identify places, check feasibility, choose a base, sequence days, reason about
 weather and transit, and prepare payment.
 

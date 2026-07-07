@@ -283,13 +283,13 @@ class HashKeyHSPClientTests(unittest.TestCase):
                 "payment_request_id": "x402-test",
                 "amount": "0.01",
             })(),
-            idempotency_key="tc-demo:idempotent",
+            idempotency_key="astrail-demo:idempotent",
         )
 
         self.assertTrue(result["ok"])
         payload = runner.payloads[0]
         self.assertEqual(payload["chain"], "hashkey-testnet")
-        self.assertEqual(payload["idempotency_key"], "tc-demo:idempotent")
+        self.assertEqual(payload["idempotency_key"], "astrail-demo:idempotent")
         self.assertEqual(payload["facilitator_url"], "https://hsp-hackathon.hashkeymerchant.com/facilitator")
         self.assertEqual(payload["payee_address"], "0x2222222222222222222222222222222222222222")
         self.assertEqual(payload["amount_base_units"], "10000")
@@ -309,7 +309,7 @@ class HashKeyHSPClientTests(unittest.TestCase):
                 "payment_request_id": "x402-test",
                 "amount": "0.01",
             })(),
-            idempotency_key="tc-demo:idempotent",
+            idempotency_key="astrail-demo:idempotent",
         )
 
         self.assertFalse(result["ok"])
@@ -344,7 +344,7 @@ class HashKeyHSPSdkRunnerTests(unittest.TestCase):
                 self.assertTrue(script_path.exists())
                 self.assertNotIn("input", kwargs)
                 self.assertEqual(kwargs["stdin"], subprocess.DEVNULL)
-                payload_path = Path(kwargs["env"]["TRIPCANVAS_HSP_PAYLOAD_PATH"])
+                payload_path = Path(kwargs["env"]["ASTRAIL_HSP_PAYLOAD_PATH"])
                 payload_paths.append(payload_path)
                 self.assertTrue(payload_path.exists())
                 written = json.loads(payload_path.read_text(encoding="utf-8"))

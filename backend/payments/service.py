@@ -1,4 +1,4 @@
-"""Simulation-first agentic hotel payments for TripCanvas.
+"""Simulation-first agentic hotel payments for Astrail.
 
 This module keeps the AP2-shaped mandate and x402-shaped booking loop behind a
 small service boundary. It does not perform network calls or real settlement.
@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from backend.payments.hsp import HSPClient, HSPConfig, HSPConfigError, HSPReceiptSummary
 
 
-_DEFAULT_TRIP_ID = "tc-demo-osaka-001"
+_DEFAULT_TRIP_ID = "astrail-demo-osaka-001"
 _DEFAULT_CHECKIN = date(2026, 6, 10)
 _DEFAULT_CHECKOUT = date(2026, 6, 13)
 _DEFAULT_NETWORK = "base-sepolia"
@@ -32,11 +32,11 @@ _DEFAULT_AGENT_PAYMENT_USD = Decimal("0.01")
 _DEFAULT_PAYER = "0xOrchestratorDemo"
 _DEFAULT_PAYEE = "0xHotelAgentDemo"
 _RECEIPT_NOTE = "Demo-safe mock booking. No real hotel reservation was created."
-_AP2_FORMAT = "tripcanvas-ap2-demo-jws"
-_AP2_VCT = "tripcanvas.ap2.hotel_booking.confirmation.1"
+_AP2_FORMAT = "astrail-ap2-demo-jws"
+_AP2_VCT = "astrail.ap2.hotel_booking.confirmation.1"
 _AP2_ALG = "HS256"
 _AP2_TYP = "JWT"
-_AP2_KID = "tripcanvas-demo-ap2-v1"
+_AP2_KID = "astrail-demo-ap2-v1"
 _AP2_BUTTON_LABEL = "Confirm Hotel Booking"
 _AP2_CLOCK_SKEW_SECONDS = 60
 
@@ -55,11 +55,11 @@ class BookingError(BaseModel):
 class AP2UserConfirmation(BaseModel):
     confirmed: bool = False
     button_label: str = ""
-    trusted_surface: str = "tripcanvas-web"
+    trusted_surface: str = "astrail-web"
 
 
 class AP2SignedMandate(BaseModel):
-    format: Literal["tripcanvas-ap2-demo-jws"] = _AP2_FORMAT
+    format: Literal["astrail-ap2-demo-jws"] = _AP2_FORMAT
     protected: str
     payload: str
     signature: str
@@ -356,7 +356,7 @@ def deterministic_booking_id(
     digest = hashlib.sha1(
         f"{trip_id}|{mandate_id}|{hotel_id}|{checkin.isoformat()}|{checkout.isoformat()}|{guests}".encode()
     ).hexdigest()
-    return f"TC-MOCK-HOTEL-{digest[:8].upper()}"
+    return f"ASTRAIL-MOCK-HOTEL-{digest[:8].upper()}"
 
 
 class X402SimulationAdapter:
@@ -606,8 +606,8 @@ class X402SdkBinding:
             url=resource_url,
             description=description,
             mimeType="application/json",
-            serviceName="TripCanvas Hotel Booking Agent",
-            tags=["tripcanvas", "hotel-booking", "x402"],
+            serviceName="Astrail Hotel Booking Agent",
+            tags=["astrail", "hotel-booking", "x402"],
         )
         return self.server.build_payment_requirements(resource_config), resource
 
@@ -656,8 +656,8 @@ class X402RealAdapter:
                 network=config["network"],
                 pay_to=config["payee"],
                 price=f"${instructions.amount}",
-                resource_url=f"tripcanvas://hotel-booking/{instructions.hotel_id}",
-                description=f"TripCanvas mock hotel booking fee for {instructions.hotel_id}",
+                resource_url=f"astrail://hotel-booking/{instructions.hotel_id}",
+                description=f"Astrail mock hotel booking fee for {instructions.hotel_id}",
             )
             payload = binding.create_payment_payload(requirements)
         except X402RealPaymentError:
@@ -1335,11 +1335,11 @@ def _ap2_demo_secret() -> str:
 
 
 def _ap2_issuer() -> str:
-    return os.getenv("AP2_DEMO_ISSUER", "tripcanvas-demo-trusted-surface").strip()
+    return os.getenv("AP2_DEMO_ISSUER", "astrail-demo-trusted-surface").strip()
 
 
 def _ap2_audience() -> str:
-    return os.getenv("AP2_DEMO_AUDIENCE", "tripcanvas-hotel-booking-agent").strip()
+    return os.getenv("AP2_DEMO_AUDIENCE", "astrail-hotel-booking-agent").strip()
 
 
 def _ap2_mandate_ttl_seconds() -> int:

@@ -1,10 +1,10 @@
 # Agent Instructions
 
-This project is TripCanvas.
+This project is Astrail.
 
 ## Current Product Direction
 
-TripCanvas is an AI-native travel planner. The main demo flow stays aligned with
+Astrail is an AI-native travel planner. The main demo flow stays aligned with
 `CLAUDE.md`:
 
 1. User provides 3-4 Instagram Reel URLs, travel dates, and free-text

@@ -1,4 +1,4 @@
-"""Compatibility facade for the TripCanvas planner domain.
+"""Compatibility facade for the Astrail planner domain.
 
 New code should import from `backend.planner.*`. This module preserves the
 original spike import path used by the FastAPI app and tests.
