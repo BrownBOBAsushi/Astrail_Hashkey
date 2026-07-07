@@ -146,7 +146,7 @@ class HSPConfig:
             facilitator_url=required["HSP_FACILITATOR_URL"].rstrip("/"),
             issuer_url=os.getenv("HSP_ISSUER_URL", DEFAULT_HSP_ISSUER_URL).strip().rstrip("/"),
             rpc_url=os.getenv("HSP_RPC_URL", DEFAULT_HSP_RPC_URL).strip(),
-            sdk_path=os.getenv("HSP_SDK_PATH", "").strip(),
+            sdk_path=_path_env("HSP_SDK_PATH"),
             payer_address=required["HSP_PAYER_ADDRESS"],
             payee_address=required["HSP_PAYEE_ADDRESS"],
             usdc_address=required["HSP_USDC_ADDRESS"],
@@ -185,7 +185,7 @@ class HSPSdkRunner:
     """Runs the official TypeScript HSP SDK from a local hackathon repo clone."""
 
     def run_pay_x402(self, payload: dict[str, Any]) -> dict[str, Any]:
-        sdk_path = Path(str(payload["sdk_path"])).expanduser()
+        sdk_path = Path(_normalize_env_path(str(payload["sdk_path"]))).expanduser()
         if not str(sdk_path).strip():
             return _hsp_sdk_missing()
         if not sdk_path.exists():
@@ -277,6 +277,14 @@ def _positive_int_env(name: str, default: int) -> int:
         return max(1, int(raw))
     except ValueError:
         return default
+
+
+def _path_env(name: str) -> str:
+    return _normalize_env_path(os.getenv(name, "").strip())
+
+
+def _normalize_env_path(value: str) -> str:
+    return value.replace("\t", r"\t")
 
 
 def _hsp_sdk_missing() -> dict[str, Any]:

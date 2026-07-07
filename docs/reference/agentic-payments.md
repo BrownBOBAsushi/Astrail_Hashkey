@@ -130,7 +130,7 @@ HSP_CHAIN=hashkey-testnet
 HSP_FACILITATOR_URL=https://hsp-hackathon.hashkeymerchant.com/facilitator
 HSP_ISSUER_URL=https://hsp-hackathon.hashkeymerchant.com/issuer
 HSP_RPC_URL=https://testnet.hsk.xyz
-HSP_SDK_PATH=/absolute/path/to/local/hsp
+HSP_SDK_PATH=C:/tmp/hsp
 HSP_PAYER_ADDRESS=...
 HSP_PAYEE_ADDRESS=...
 HSP_USDC_ADDRESS=0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6
@@ -147,6 +147,8 @@ package. Clone `https://github.com/project-hsp/hsp`, run `npm install` in that
 folder, then set `HSP_SDK_PATH` to the local clone. TripCanvas calls
 `@hsp/sdk` from that folder for the signed HSP mandate, x402 EIP-3009
 authorization, facilitator settlement, and coordinator observe step.
+On Windows `.env` files, prefer forward slashes (`C:/tmp/hsp`) because quoted
+backslashes can be decoded as escapes such as `\t`.
 
 Guardrails:
 
