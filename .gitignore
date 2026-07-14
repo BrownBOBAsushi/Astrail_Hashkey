@@ -22,6 +22,16 @@ content.md
 
 # Local agent/browser artifacts
 .gstack/
+.pytest_cache/
+
+# Local pitch-deck scratch artifacts
+deck_assets_old_pdf/
+tmp_tripcanvas_pdf_text.txt
+pitch-deck-hashkey/deck-preview.png
+pitch-deck-hashkey/previews/slide-07.png
+pitch-deck-hashkey/previews/slide-08.png
+pitch-deck-hashkey/previews/slide-09.png
+pitch-deck-hashkey/previews/slide-09-delay.png
 
 # Frontend dependencies and build output
 frontend/node_modules/

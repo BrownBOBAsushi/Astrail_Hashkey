@@ -1,17 +1,17 @@
 {
-  "title": "Rain-Soft Tokyo: Shiodome, Roppongi, Akasaka, Akihabara and Ariake",
+  "title": "Rain-Soft Tokyo: Akasaka, Roppongi, Akasaka, Akihabara and Ariake",
   "days": [
     {
       "day_number": 1,
       "date": "2026-06-10",
-      "activities": "Morning: arrive at Tokyo Narita at 07:05 on the overnight Scoot nonstop from Singapore, take the rail transfer into Shiodome/Shimbashi, drop bags at The Royal Park Hotel Iconic Tokyo Shiodome, and ease into the day with coffee and a covered walk around Shiodome. Afternoon: head to Roppongi Hills for Grand Hyatt Tokyo as a polished indoor stop, treating it as an activity by lingering over its restaurants and elegant lobby-bar atmosphere, with optional spa-style downtime if access or a day package is available. Evening: stay in the Roppongi/Shimbashi corridor for a warming ramen dinner, then return to Shiodome for an early night after the flight.",
+      "activities": "Morning: arrive at Tokyo Narita at 07:05 on the overnight Scoot nonstop from Singapore, take the rail transfer into Akasaka/Akasaka-mitsuke, drop bags at Hotel Risveglio Akasaka, and ease into the day with coffee and a covered walk around Akasaka. Afternoon: head to Roppongi Hills for Grand Hyatt Tokyo as a polished indoor stop, treating it as an activity by lingering over its restaurants and elegant lobby-bar atmosphere, with optional spa-style downtime if access or a day package is available. Evening: stay in the Roppongi/Akasaka-mitsuke corridor for a warming ramen dinner, then return to Akasaka for an early night after the flight.",
       "stops": [
         {
           "time_of_day": "morning",
           "name": "Hamarikyu Gardens",
           "category": "attraction",
           "place_name": null,
-          "description": "Stroll the tidal pond and matcha teahouse beside Shiodome to ease off the overnight flight."
+          "description": "Stroll the tidal pond and matcha teahouse beside Akasaka to ease off the overnight flight."
         },
         {
           "time_of_day": "afternoon",
@@ -28,14 +28,14 @@
           "description": "Wind down with dinner among Tokyo Midtown's restaurants a short walk from Roppongi."
         }
       ],
-      "hotel": "The Royal Park Hotel Iconic Tokyo Shiodome",
-      "narration": "Tokyo greets you through a veil of light rain, all glossy pavements and station chimes after the red-eye from Singapore. By evening, the city feels softer: warm broth, hotel lights above Shiodome, and the relief of being exactly where the rail lines make everything easy.",
+      "hotel": "Hotel Risveglio Akasaka",
+      "narration": "Tokyo greets you through a veil of light rain, all glossy pavements and station chimes after the red-eye from Singapore. By evening, the city feels softer: warm broth, hotel lights above Akasaka, and the relief of being exactly where the rail lines make everything easy.",
       "weather_strategy": "Light rain makes this an indoor-and-covered arrival day, with hotel dining, lobby-bar ambience, and short rail hops prioritized over outdoor exploring."
     },
     {
       "day_number": 2,
       "date": "2026-06-11",
-      "activities": "Morning: start slowly from Shiodome with a covered rail ride to Akasaka and a reserved late-morning visit to Harry Potter Cafe at Akasaka Biz Tower, enjoying the themed dining rooms before the lunch rush. Afternoon: continue by train to Akihabara for SANDO LAB TOKYO at Don Quijote Akihabara 1F, pairing a crisp fried sandwich with an easy indoor browse through Akihabara’s electronics, anime, and game shops. Evening: return toward Shimbashi/Ginza for ramen or izakaya-style comfort food within walking distance of the hotel.",
+      "activities": "Morning: start slowly from Akasaka with a covered rail ride to Akasaka and a reserved late-morning visit to Harry Potter Cafe at Akasaka Biz Tower, enjoying the themed dining rooms before the lunch rush. Afternoon: continue by train to Akihabara for SANDO LAB TOKYO at Don Quijote Akihabara 1F, pairing a crisp fried sandwich with an easy indoor browse through Akihabara’s electronics, anime, and game shops. Evening: return toward Akasaka-mitsuke/Ginza for ramen or izakaya-style comfort food within walking distance of the hotel.",
       "stops": [
         {
           "time_of_day": "morning",
@@ -59,14 +59,14 @@
           "description": "Eight floors of anime and collectibles in Akihabara before a Ginza-side dinner."
         }
       ],
-      "hotel": "The Royal Park Hotel Iconic Tokyo Shiodome",
+      "hotel": "Hotel Risveglio Akasaka",
       "narration": "Rain taps at the city while you slip from spellbook interiors to neon shopfronts, Tokyo turning the weather into part of the mood. The day tastes like buttered toast, fried sando crunch, and a steaming bowl at night.",
       "weather_strategy": "Heavier rain is absorbed by indoor cafe, food, and shopping stops connected by efficient train routes."
     },
     {
       "day_number": 3,
       "date": "2026-06-12",
-      "activities": "Morning: keep the umbrella handy and travel west to Kokubunji for Popo, verifying the exact venue before setting out and aiming for the 11:30–14:30 lunch window. Afternoon: return across town at an unhurried pace, using Shiodome as a reset point for rest, convenience-store snacks, or an indoor onsen-style bathhouse/spa option nearby if you want warm-water downtime. Evening: enjoy a walkable Shimbashi or Ginza dinner, favoring ramen counters or cozy restaurants close enough to retreat quickly if the rain strengthens.",
+      "activities": "Morning: keep the umbrella handy and travel west to Kokubunji for Popo, verifying the exact venue before setting out and aiming for the 11:30–14:30 lunch window. Afternoon: return across town at an unhurried pace, using Akasaka as a reset point for rest, convenience-store snacks, or an indoor onsen-style bathhouse/spa option nearby if you want warm-water downtime. Evening: enjoy a walkable Akasaka-mitsuke or Ginza dinner, favoring ramen counters or cozy restaurants close enough to retreat quickly if the rain strengthens.",
       "stops": [
         {
           "time_of_day": "morning",
@@ -84,20 +84,20 @@
         },
         {
           "time_of_day": "evening",
-          "name": "Caretta Shiodome",
+          "name": "Caretta Akasaka",
           "category": "restaurant",
           "place_name": null,
-          "description": "Sky-high dinner at Caretta Shiodome's 46th-floor restaurants beside the hotel."
+          "description": "Sky-high dinner at Caretta Akasaka's 46th-floor restaurants beside the hotel."
         }
       ],
-      "hotel": "The Royal Park Hotel Iconic Tokyo Shiodome",
-      "narration": "This is the slow Tokyo day: train windows streaked with rain, a small restaurant search, and the satisfaction of finding warmth at the end of the line. Back near Shiodome, the city compresses into lanterns, steam, and the easy rhythm of walking home.",
+      "hotel": "Hotel Risveglio Akasaka",
+      "narration": "This is the slow Tokyo day: train windows streaked with rain, a small restaurant search, and the satisfaction of finding warmth at the end of the line. Back near Akasaka, the city compresses into lanterns, steam, and the easy rhythm of walking home.",
       "weather_strategy": "Because rain continues, the farthest and most ambiguous food stop is scheduled as a lunch mission, while the rest of the day stays flexible and close to transit."
     },
     {
       "day_number": 4,
       "date": "2026-06-13",
-      "activities": "Morning: check out of The Royal Park Hotel Iconic Tokyo Shiodome, store luggage if needed, and ride to Ariake for Tokyo Dream Park, saving this theme-park-style entertainment complex for the lightest-rain day of the trip. Afternoon: focus on its indoor Doraemon exhibition areas, rotating 7th–8th floor event spaces, event-limited goods, and, if the drizzle eases, a short visit to the free 6th-floor rooftop terrace with Doraemon figures. Evening: return to Shiodome/Shimbashi to collect luggage, have a final ramen or casual dinner if timing allows, and begin onward airport or next-destination logistics.",
+      "activities": "Morning: check out of Hotel Risveglio Akasaka, store luggage if needed, and ride to Ariake for Tokyo Dream Park, saving this theme-park-style entertainment complex for the lightest-rain day of the trip. Afternoon: focus on its indoor Doraemon exhibition areas, rotating 7th–8th floor event spaces, event-limited goods, and, if the drizzle eases, a short visit to the free 6th-floor rooftop terrace with Doraemon figures. Evening: return to Akasaka/Akasaka-mitsuke to collect luggage, have a final ramen or casual dinner if timing allows, and begin onward airport or next-destination logistics.",
       "stops": [
         {
           "time_of_day": "morning",
@@ -134,8 +134,8 @@
     "Popo"
   ],
   "source": "live",
-  "recommended_hotel": "The Royal Park Hotel Iconic Tokyo Shiodome",
-  "hotel_booking_url": "https://www.booking.com/hotel/jp/royalpark-shiodometower.html?nad_placement=SR_MAIN",
+  "recommended_hotel": "Hotel Risveglio Akasaka",
+  "hotel_booking_url": "https://risveglio-akasaka.com/en/",
   "recommended_flight": "Scoot nonstop economy, Singapore SIN 23:05 → Tokyo Narita NRT 07:05 +1 on 2026-06-10, about 7h; surfaced fare about USD 190.90 one-way in live search, with Scoot direct June round-trip fares shown from about SGD 543 subject to availability.",
   "flight_booking_url": "https://www.flyscoot.com/flights/en-sg/flights-from-singapore-to-tokyo",
   "places": [
@@ -167,61 +167,102 @@
   ],
   "hotel_options": [
     {
-      "id": "hotel_royal_park_shiodome",
-      "name": "The Royal Park Hotel Iconic Tokyo Shiodome",
-      "base_area_id": "shiodome",
-      "city": "Tokyo",
-      "area": "Shiodome",
-      "lat": 35.6655,
-      "lng": 139.7585,
+      "id": "hotel_risveglio_akasaka",
+      "name": "Hotel Risveglio Akasaka",
+      "base_area_id": "akasaka_mitsuke_akasaka",
+      "lat": 35.6768,
+      "lng": 139.7366,
+      "area": "Akasaka / Akasaka-mitsuke",
       "price_per_night_sgd": 200,
-      "station_walk_min": 6,
-      "convenience_store_walk_min": 2,
+      "station_walk_min": 2,
+      "convenience_store_walk_min": null,
       "quiet_score": 8,
       "route_efficiency_score": 9,
       "budget_tier": "mid_range",
       "amenities": [
-        "breakfast",
-        "near_station",
-        "laundry",
-        "near_convenience_store"
+        "Officially listed 2-minute walk from Akasaka-mitsuke Station Exit 10",
+        "Central Akasaka location",
+        "Stylish modern/vintage design",
+        "On-site dining space"
       ],
       "mock_available_rooms": 3,
-      "room_type": "Standard double room",
-      "cancellation_policy": "Free cancellation until 48 hours before check-in",
-      "price_summary": "Mid-range to upper-mid. Direct-access Shiodome tower with strong rail links to Narita and walkable Ginza/Shimbashi.",
-      "booking_url": "https://www.booking.com/hotel/jp/royalpark-shiodometower.html?nad_placement=SR_MAIN",
-      "rationale": "Best pick: meets every requirement — central Shiodome base with covered station access (great for the rainy arrival days), walking-friendly to Ginza/Shimbashi dining, and an easy NRT transfer that fits the Scoot arrival.",
+      "room_type": "Demo double room",
+      "cancellation_policy": "Demo-safe mock booking; no real hotel reservation is created.",
+      "price_summary": "Live 2026-06-10 to 2026-06-13 pricing was not returned in the web results; verify the official booking flow before purchase. Expected fit: mid-range boutique/business-hotel value rather than luxury.",
+      "booking_url": "https://risveglio-akasaka.com/en/",
+      "rationale": "Best pick because it most cleanly fulfills the requirements: it is in the selected Akasaka base, has the strongest station access among the finalists with an official 2-minute walk to Akasaka-mitsuke, keeps the traveler near ramen/late-night Akasaka food streets, and gives a more distinctive stay than a standard chain hotel while staying in the mid-range/value lane. ([risveglio-akasaka.com](https://risveglio-akasaka.com/en/?utm_source=openai))",
       "tradeoffs": [
-        "Not the cheapest option in the shortlist.",
-        "Shiodome is business-district quiet at night versus livelier Shinjuku/Shibuya."
+        "No verified live price or room availability from the search results, so final booking should be checked directly.",
+        "Does not advertise an onsen/public bath, unlike the Super Hotel runner-up.",
+        "Boutique styling may matter less if the traveler only wants the lowest possible rate."
       ],
+      "city": "Tokyo",
       "is_best": true
     },
     {
-      "id": "hotel_park_hotel_tokyo_shiodome",
-      "name": "Park Hotel Tokyo (Shiodome)",
-      "base_area_id": "shiodome",
-      "price_summary": "Mid-range. Art-themed rooms in the Shiodome Media Tower, same walkable cluster.",
-      "booking_url": null,
-      "rationale": "Strong runner-up in the same base: similar Shiodome convenience and Ginza walkability at a slightly more design-forward, sometimes lower price point.",
-      "tradeoffs": [
-        "Rooms can be smaller than the best pick.",
-        "Higher floors fill fast on popular dates."
+      "id": "sotetsu_fresa_inn_tokyo_akasaka",
+      "name": "Sotetsu Fresa Inn Tokyo-Akasaka",
+      "base_area_id": "akasaka_mitsuke_akasaka",
+      "lat": 35.6722,
+      "lng": 139.7369,
+      "area": "Akasaka",
+      "price_per_night_sgd": 200,
+      "station_walk_min": 3,
+      "convenience_store_walk_min": null,
+      "quiet_score": 7,
+      "route_efficiency_score": 8,
+      "budget_tier": "mid_range",
+      "amenities": [
+        "Officially listed 3-minute walk from Akasaka Station Exit 3a",
+        "Reliable business-hotel format",
+        "Strong Chiyoda Line access",
+        "Good Akasaka food access"
       ],
+      "mock_available_rooms": 3,
+      "room_type": "Demo double room",
+      "cancellation_policy": "Demo-safe mock booking; no real hotel reservation is created.",
+      "price_summary": "Live 2026-06-10 to 2026-06-13 pricing was not returned in the web results; verify the official booking flow before purchase. Expected fit: dependable mid-range chain value.",
+      "booking_url": "https://sotetsu-hotels.com/fresa-inn/akasaka/",
+      "rationale": "Strong runner-up for predictability and station access: the official hotel page lists it as 3 minutes from Akasaka Station, putting it close to the selected base’s food streets and convenient for the Roppongi/Akasaka places. ([sotetsu-hotels.com](https://sotetsu-hotels.com/fresa-inn/akasaka/?utm_source=openai))",
+      "tradeoffs": [
+        "Gives up the best pick’s slightly better Akasaka-mitsuke access for Ginza/Marunouchi Line movement.",
+        "More standard business-hotel feel than Hotel Risveglio.",
+        "No confirmed onsen/public bath from the sources reviewed."
+      ],
+      "city": "Tokyo",
       "is_best": false
     },
     {
-      "id": "hotel_conrad_tokyo_shiodome",
-      "name": "Conrad Tokyo (Shiodome)",
-      "base_area_id": "shiodome",
-      "price_summary": "Luxury. Bayfront Shiodome tower with spa and skyline views.",
-      "booking_url": null,
-      "rationale": "Comfort/upgrade option in the same base for travelers willing to spend more: larger rooms, spa, and premium dining while keeping the identical Shiodome transit advantages.",
-      "tradeoffs": [
-        "Well above the mid-range budget for this trip.",
-        "Premium amenities are nice-to-have, not required by the stated preferences."
+      "id": "super_hotel_premier_akasaka",
+      "name": "Super Hotel Premier Akasaka",
+      "base_area_id": "akasaka_mitsuke_akasaka",
+      "lat": 35.6757,
+      "lng": 139.7374,
+      "area": "Akasaka / Akasaka-mitsuke",
+      "price_per_night_sgd": 200,
+      "station_walk_min": null,
+      "convenience_store_walk_min": null,
+      "quiet_score": 7,
+      "route_efficiency_score": 8,
+      "budget_tier": "mid_range",
+      "amenities": [
+        "Premier business-hotel positioning",
+        "Akasaka/Roppongi/Azabu area listing",
+        "Public-bath/onsen-style appeal suggested by the official property name Akane-no-Yu",
+        "Good fit for traveler’s onsen preference"
       ],
+      "mock_available_rooms": 3,
+      "room_type": "Demo double room",
+      "cancellation_policy": "Demo-safe mock booking; no real hotel reservation is created.",
+      "price_summary": "Live 2026-06-10 to 2026-06-13 pricing was not returned in the web results; verify the official booking flow before purchase. Expected fit: value-oriented mid-range if rates are not inflated.",
+      "booking_url": "https://www.superhotel.co.jp/s_hotels/akasaka/",
+      "rationale": "Best thematic match for the traveler’s onsen preference among the Akasaka options because the official listing is Super Hotel Premier Akasaka Akane-no-Yu. It remains a practical Akasaka base for food and transit, though the search result did not expose a clear walk-time snippet comparable to the other two hotels. ([superhotel.co.jp](https://www.superhotel.co.jp/s_hotels/akasaka/?sa=X&ved=2ahUKEwjfg8ib9_OFAxWMK_kAHQ7VD70QyK4DegUIAxCJAQ&utm_source=openai))",
+      "tradeoffs": [
+        "Gives up the best pick’s clearly verified 2-minute station walk.",
+        "Official search result did not provide enough room, walk-time, or live-price detail to rank it first.",
+        "Likely more functional than boutique in room design."
+      ],
+      "city": "Tokyo",
       "is_best": false
     }
   ],
@@ -309,13 +350,13 @@
       {
         "booking_id": "ASTRAIL-MOCK-1c00dc23",
         "category": "hotel",
-        "name": "The Royal Park Hotel Iconic Tokyo Shiodome",
+        "name": "Hotel Risveglio Akasaka",
         "price_estimate_sgd": null,
         "status": "reserved",
-        "book_url": "https://www.booking.com/searchresults.html?ss=Tokyo&checkin=2026-06-10&checkout=2026-06-13&group_adults=2&no_rooms=1",
+        "book_url": "https://risveglio-akasaka.com/en/",
         "source": "booking_deeplink",
         "is_mock": true,
-        "notes": "Reserved for 2026-06-10->2026-06-13 (2 adults). Click book_url to confirm on Booking.com.",
+        "notes": "Demo-safe mock reservation for Hotel Risveglio Akasaka; confirm directly before any real booking.",
         "settlement": {
           "settlement_id": "ap2-mock-db564be2a6",
           "payment_protocol": "ap2_x402",

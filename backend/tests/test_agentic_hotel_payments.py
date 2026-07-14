@@ -72,11 +72,11 @@ def booking_ready_hotel_tool() -> dict:
             hotel.update(
                 {
                     "city": "Tokyo",
-                    "area": "Shiodome",
-                    "lat": 35.6655,
-                    "lng": 139.7585,
+                    "area": "Akasaka / Akasaka-mitsuke",
+                    "lat": 35.6768,
+                    "lng": 139.7366,
                     "price_per_night_sgd": 200,
-                    "station_walk_min": 6,
+                    "station_walk_min": 2,
                     "convenience_store_walk_min": 2,
                     "quiet_score": 8,
                     "route_efficiency_score": 9,
@@ -120,7 +120,7 @@ def demo_request(**overrides) -> HotelBookingRequest:
         "mandate": demo_mandate(),
         "idempotency_key": (
             "astrail-demo-osaka-001:ap2-demo-astrail-osaka-001:"
-            "hotel_royal_park_shiodome"
+            "hotel_risveglio_akasaka"
         ),
     }
     data.update(overrides)
@@ -193,8 +193,8 @@ class AgenticHotelPaymentTests(unittest.TestCase):
         selected_hotel = resolve_selected_hotel(hotel_tool)
 
         self.assertIn("hotel_options", hotel_tool)
-        self.assertEqual(selected_hotel["id"], "hotel_royal_park_shiodome")
-        self.assertEqual(selected_hotel["name"], "The Royal Park Hotel Iconic Tokyo Shiodome")
+        self.assertEqual(selected_hotel["id"], "hotel_risveglio_akasaka")
+        self.assertEqual(selected_hotel["name"], "Hotel Risveglio Akasaka")
         self.assertIs(selected_hotel["is_best"], True)
 
     def test_booking_requires_payment_before_proof(self):
@@ -224,7 +224,7 @@ class AgenticHotelPaymentTests(unittest.TestCase):
             "ASTRAIL-MOCK-HOTEL-"
             + hashlib.sha1(
                 "astrail-demo-osaka-001|ap2-demo-astrail-osaka-001|"
-                "hotel_royal_park_shiodome|2026-06-10|2026-06-13|2".encode()
+                "hotel_risveglio_akasaka|2026-06-10|2026-06-13|2".encode()
             )
             .hexdigest()[:8]
             .upper()
@@ -371,7 +371,7 @@ class AgenticHotelPaymentTests(unittest.TestCase):
         )
         self.assertEqual(
             response.ap2.signed_mandate.payload_json["checkout"]["hotel_id"],
-            "hotel_royal_park_shiodome",
+            "hotel_risveglio_akasaka",
         )
         self.assertEqual(response.preview["payment"]["amount"], "0.01")
 

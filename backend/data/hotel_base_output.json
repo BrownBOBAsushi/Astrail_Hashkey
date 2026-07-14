@@ -1,126 +1,182 @@
 {
   "source": "live",
   "selected_base": {
-    "id": "shiodome",
-    "name": "Shiodome / Shimbashi",
+    "id": "akasaka_mitsuke_akasaka",
+    "name": "Akasaka / Akasaka-mitsuke",
     "score": 92,
     "center": {
-      "lat": 35.6655,
-      "lng": 139.7585
+      "lat": 35.6766,
+      "lng": 139.7373
     },
-    "transit_summary": "Central, covered-walkway base with direct Narita access via the Yamanote/JR Shimbashi hub and Toei Oedo/Asakusa lines; walkable to Ginza and Hamarikyu, and an easy hop to Roppongi (Grand Hyatt) and Akasaka (Harry Potter Cafe). Underground concourses make rainy arrival days painless.",
-    "rationale": "Best fit for this Tokyo place list: Shiodome sits between Ginza and the bay, gives a one-seat-ish ride to Narita for the Scoot arrival, and keeps the saved Roppongi/Akasaka/Ariake stops within a short ride. Dense convenience-store and dining access supports late-night ramen and walking-friendly evenings.",
+    "transit_summary": "Best all-round base for this reel set: very close to Harry Potter Cafe and Grand Hyatt Tokyo/Roppongi, direct or simple subway rides toward Ueno/Okachimachi for Sando Lab Tokyo and Popo, and workable access to Odaiba/Ariake for Tokyo Dream Park via central subway + waterfront transit.",
+    "rationale": "Selected because it best matches the traveler’s stated priority of shortest travel while still fitting mid-range value, walkability, ramen/late-night food, and convenience access. Akasaka is served by Akasaka Station on the Chiyoda Line, while Akasaka-mitsuke adds Marunouchi/Ginza Line access; official Tokyo/JNTO guidance also highlights Akasaka’s backstreets, restaurants, ramen shops, and proximity to Roppongi. ([gotokyo.org](https://www.gotokyo.org/en/destinations/central-tokyo/akasaka/index.html?utm_source=openai))",
     "tradeoffs": [
-      "Business-district quiet at night versus livelier Shinjuku or Shibuya.",
-      "Tokyo Dream Park in Ariake still needs a Yurikamome/transit leg.",
-      "Central rates run above outer-ward value hotels."
+      "Not the absolute closest base to Ueno/Nippori-side food stops such as Popo.",
+      "Not as on-the-water convenient for Tokyo Dream Park/Odaiba as Shimbashi or Toyosu.",
+      "Akasaka has many business hotels, but room sizes can be compact in the mid-range tier."
     ]
   },
   "base_areas": [
     {
-      "id": "shiodome",
-      "name": "Shiodome / Shimbashi",
+      "id": "akasaka_mitsuke_akasaka",
+      "name": "Akasaka / Akasaka-mitsuke",
       "score": 92,
       "center": {
-        "lat": 35.6655,
-        "lng": 139.7585
+        "lat": 35.6766,
+        "lng": 139.7373
       },
-      "transit_summary": "Central, covered-walkway base with direct Narita access via the Shimbashi hub; walkable to Ginza, easy to Roppongi and the Ariake bayfront.",
-      "rationale": "Strongest all-around base for the Tokyo cluster: airport access, Ginza walkability, and short rides to the saved Roppongi/Akasaka/Ariake spots.",
+      "transit_summary": "Best all-round base for this reel set: very close to Harry Potter Cafe and Grand Hyatt Tokyo/Roppongi, direct or simple subway rides toward Ueno/Okachimachi for Sando Lab Tokyo and Popo, and workable access to Odaiba/Ariake for Tokyo Dream Park via central subway + waterfront transit.",
+      "rationale": "Selected because it best matches the traveler’s stated priority of shortest travel while still fitting mid-range value, walkability, ramen/late-night food, and convenience access. Akasaka is served by Akasaka Station on the Chiyoda Line, while Akasaka-mitsuke adds Marunouchi/Ginza Line access; official Tokyo/JNTO guidance also highlights Akasaka’s backstreets, restaurants, ramen shops, and proximity to Roppongi. ([gotokyo.org](https://www.gotokyo.org/en/destinations/central-tokyo/akasaka/index.html?utm_source=openai))",
       "tradeoffs": [
-        "Quieter nightlife than Shinjuku/Shibuya.",
-        "Ariake still needs a transit leg."
+        "Not the absolute closest base to Ueno/Nippori-side food stops such as Popo.",
+        "Not as on-the-water convenient for Tokyo Dream Park/Odaiba as Shimbashi or Toyosu.",
+        "Akasaka has many business hotels, but room sizes can be compact in the mid-range tier."
       ]
     },
     {
-      "id": "ginza",
-      "name": "Ginza",
+      "id": "ueno_okachimachi",
+      "name": "Ueno / Okachimachi",
       "score": 86,
       "center": {
-        "lat": 35.6717,
-        "lng": 139.7650
+        "lat": 35.7074,
+        "lng": 139.7745
       },
-      "transit_summary": "Premium shopping/dining district one stop from Shimbashi, with broad subway coverage toward Akasaka and Roppongi.",
-      "rationale": "A polished, very walkable alternative immediately north of Shiodome that keeps the same airport and cross-city access while adding flagship dining.",
+      "transit_summary": "Strong for Sando Lab Tokyo and Popo, plus JR/Metro access from Ueno and Okachimachi. Less efficient for Roppongi/Akasaka and Odaiba than the selected base.",
+      "rationale": "Very good value and food access for a mid-range traveler who loves ramen and walkable neighborhoods. Official Tokyo guidance highlights Ueno Park and access from Ueno Station via the Ginza and Hibiya lines, and Tokyo Station is about eight minutes by JR Yamanote Line. ([gotokyo.org](https://www.gotokyo.org/en/destinations/northern-tokyo/ueno/index.html?utm_source=openai))",
       "tradeoffs": [
-        "Higher hotel rates on average.",
-        "Less late-night casual food than Shimbashi."
+        "Longer travel to Grand Hyatt Tokyo and Harry Potter Cafe.",
+        "Less convenient for Tokyo Dream Park/Odaiba than Shimbashi or Akasaka.",
+        "Neighborhood feel is busier and more market-like, which may be less polished than Akasaka."
       ]
     },
     {
-      "id": "shinjuku",
-      "name": "Shinjuku",
+      "id": "roppongi_midtown",
+      "name": "Roppongi / Tokyo Midtown",
+      "score": 83,
+      "center": {
+        "lat": 35.6655,
+        "lng": 139.7315
+      },
+      "transit_summary": "Closest base for Grand Hyatt Tokyo and Harry Potter Cafe, with Hibiya/Oedo Line access from Roppongi and nearby Nogizaka/Roppongi-itchome options.",
+      "rationale": "Excellent if the traveler wants to minimize time around Roppongi and Akasaka reels. Official Tokyo and JNTO sources note Roppongi’s multiple subway lines, international dining, nightlife, and late-night food options, which fit the food-focused preference. ([japan.travel](https://www.japan.travel/en/destinations/kanto/tokyo/roppongi-and-akasaka-area/?utm_source=openai))",
+      "tradeoffs": [
+        "Generally pricier than Akasaka and Ueno for comparable hotel quality.",
+        "Nightlife can make the immediate area louder.",
+        "Less efficient for Ueno/Nippori-side stops and not the best value base."
+      ]
+    },
+    {
+      "id": "shimbashi_ginza_edge",
+      "name": "Shimbashi / Ginza edge",
       "score": 80,
       "center": {
-        "lat": 35.6896,
-        "lng": 139.7006
+        "lat": 35.6663,
+        "lng": 139.7586
       },
-      "transit_summary": "Major interchange with huge dining/nightlife density and strong rail, but farther from the bayfront Ariake stop.",
-      "rationale": "Great value-and-energy base if nightlife matters more than proximity to the saved eastern/bayfront places.",
+      "transit_summary": "Practical for Odaiba/Ariake via Shimbashi waterfront connections and good central access to Ginza, Akasaka, and Ueno corridors.",
+      "rationale": "A strong transport-first alternative: convenient for Tokyo Dream Park/Odaiba-style movement and still central for restaurants across the city. It loses to Akasaka because the reel cluster includes multiple Akasaka/Roppongi places and the traveler also wants neighborhood value and ramen rather than purely transit efficiency.",
       "tradeoffs": [
-        "Longer rides to Ariake and Shiodome.",
-        "Busier and more crowded at peak times."
-      ]
-    },
-    {
-      "id": "roppongi",
-      "name": "Roppongi",
-      "score": 78,
-      "center": {
-        "lat": 35.6628,
-        "lng": 139.7314
-      },
-      "transit_summary": "Close to Grand Hyatt and Akasaka, with Hibiya/Oedo line access, but a longer reach to the bay and Narita.",
-      "rationale": "Convenient if the trip centers on the Roppongi/Akasaka saved spots, at the cost of a longer airport and Ariake connection.",
-      "tradeoffs": [
-        "Less direct Narita access than Shiodome.",
-        "Nightlife-heavy area can be noisy."
+        "Less charming neighborhood fit than Akasaka for evening wandering.",
+        "Mid-range hotels near Ginza/Shimbashi can price up quickly.",
+        "Not as close to Harry Potter Cafe or Grand Hyatt Tokyo as Akasaka/Roppongi."
       ]
     }
   ],
   "hotel_candidates": [
     {
-      "id": "hotel_royal_park_shiodome",
-      "name": "The Royal Park Hotel Iconic Tokyo Shiodome",
-      "base_area_id": "shiodome",
-      "lat": 35.6655,
-      "lng": 139.7585,
-      "price_summary": "Mid-range to upper-mid. Direct-access Shiodome tower with strong rail links to Narita and walkable Ginza/Shimbashi.",
-      "booking_url": "https://www.booking.com/hotel/jp/royalpark-shiodometower.html?nad_placement=SR_MAIN",
-      "rationale": "Best pick: meets every requirement — central Shiodome base with covered station access (great for the rainy arrival days), walking-friendly to Ginza/Shimbashi dining, and an easy NRT transfer that fits the Scoot arrival.",
+      "id": "hotel_risveglio_akasaka",
+      "name": "Hotel Risveglio Akasaka",
+      "base_area_id": "akasaka_mitsuke_akasaka",
+      "lat": 35.6768,
+      "lng": 139.7366,
+      "area": "Akasaka / Akasaka-mitsuke",
+      "price_per_night_sgd": null,
+      "station_walk_min": 2,
+      "convenience_store_walk_min": null,
+      "quiet_score": 8,
+      "route_efficiency_score": 9,
+      "budget_tier": "mid_range",
+      "amenities": [
+        "Officially listed 2-minute walk from Akasaka-mitsuke Station Exit 10",
+        "Central Akasaka location",
+        "Stylish modern/vintage design",
+        "On-site dining space"
+      ],
+      "mock_available_rooms": null,
+      "room_type": null,
+      "cancellation_policy": null,
+      "price_summary": "Live 2026-06-10 to 2026-06-13 pricing was not returned in the web results; verify the official booking flow before purchase. Expected fit: mid-range boutique/business-hotel value rather than luxury.",
+      "booking_url": "https://risveglio-akasaka.com/en/",
+      "rationale": "Best pick because it most cleanly fulfills the requirements: it is in the selected Akasaka base, has the strongest station access among the finalists with an official 2-minute walk to Akasaka-mitsuke, keeps the traveler near ramen/late-night Akasaka food streets, and gives a more distinctive stay than a standard chain hotel while staying in the mid-range/value lane. ([risveglio-akasaka.com](https://risveglio-akasaka.com/en/?utm_source=openai))",
       "tradeoffs": [
-        "Not the cheapest option in the shortlist.",
-        "Shiodome is business-district quiet at night versus livelier Shinjuku/Shibuya."
+        "No verified live price or room availability from the search results, so final booking should be checked directly.",
+        "Does not advertise an onsen/public bath, unlike the Super Hotel runner-up.",
+        "Boutique styling may matter less if the traveler only wants the lowest possible rate."
       ]
     },
     {
-      "id": "hotel_park_hotel_tokyo_shiodome",
-      "name": "Park Hotel Tokyo (Shiodome)",
-      "base_area_id": "shiodome",
-      "lat": 35.6638,
-      "lng": 139.7596,
-      "price_summary": "Mid-range. Art-themed rooms in the Shiodome Media Tower, same walkable cluster.",
-      "booking_url": null,
-      "rationale": "Strong runner-up in the same base: similar Shiodome convenience and Ginza walkability at a slightly more design-forward, sometimes lower price point.",
+      "id": "sotetsu_fresa_inn_tokyo_akasaka",
+      "name": "Sotetsu Fresa Inn Tokyo-Akasaka",
+      "base_area_id": "akasaka_mitsuke_akasaka",
+      "lat": 35.6722,
+      "lng": 139.7369,
+      "area": "Akasaka",
+      "price_per_night_sgd": null,
+      "station_walk_min": 3,
+      "convenience_store_walk_min": null,
+      "quiet_score": 7,
+      "route_efficiency_score": 8,
+      "budget_tier": "mid_range",
+      "amenities": [
+        "Officially listed 3-minute walk from Akasaka Station Exit 3a",
+        "Reliable business-hotel format",
+        "Strong Chiyoda Line access",
+        "Good Akasaka food access"
+      ],
+      "mock_available_rooms": null,
+      "room_type": null,
+      "cancellation_policy": null,
+      "price_summary": "Live 2026-06-10 to 2026-06-13 pricing was not returned in the web results; verify the official booking flow before purchase. Expected fit: dependable mid-range chain value.",
+      "booking_url": "https://sotetsu-hotels.com/fresa-inn/akasaka/",
+      "rationale": "Strong runner-up for predictability and station access: the official hotel page lists it as 3 minutes from Akasaka Station, putting it close to the selected base’s food streets and convenient for the Roppongi/Akasaka places. ([sotetsu-hotels.com](https://sotetsu-hotels.com/fresa-inn/akasaka/?utm_source=openai))",
       "tradeoffs": [
-        "Rooms can be smaller than the best pick.",
-        "Higher floors fill fast on popular dates."
+        "Gives up the best pick’s slightly better Akasaka-mitsuke access for Ginza/Marunouchi Line movement.",
+        "More standard business-hotel feel than Hotel Risveglio.",
+        "No confirmed onsen/public bath from the sources reviewed."
       ]
     },
     {
-      "id": "hotel_conrad_tokyo_shiodome",
-      "name": "Conrad Tokyo (Shiodome)",
-      "base_area_id": "shiodome",
-      "lat": 35.6628,
-      "lng": 139.7593,
-      "price_summary": "Luxury. Bayfront Shiodome tower with spa and skyline views.",
-      "booking_url": null,
-      "rationale": "Comfort/upgrade option in the same base for travelers willing to spend more: larger rooms, spa, and premium dining while keeping the identical Shiodome transit advantages.",
+      "id": "super_hotel_premier_akasaka",
+      "name": "Super Hotel Premier Akasaka",
+      "base_area_id": "akasaka_mitsuke_akasaka",
+      "lat": 35.6757,
+      "lng": 139.7374,
+      "area": "Akasaka / Akasaka-mitsuke",
+      "price_per_night_sgd": null,
+      "station_walk_min": null,
+      "convenience_store_walk_min": null,
+      "quiet_score": 7,
+      "route_efficiency_score": 8,
+      "budget_tier": "mid_range",
+      "amenities": [
+        "Premier business-hotel positioning",
+        "Akasaka/Roppongi/Azabu area listing",
+        "Public-bath/onsen-style appeal suggested by the official property name Akane-no-Yu",
+        "Good fit for traveler’s onsen preference"
+      ],
+      "mock_available_rooms": null,
+      "room_type": null,
+      "cancellation_policy": null,
+      "price_summary": "Live 2026-06-10 to 2026-06-13 pricing was not returned in the web results; verify the official booking flow before purchase. Expected fit: value-oriented mid-range if rates are not inflated.",
+      "booking_url": "https://www.superhotel.co.jp/s_hotels/akasaka/",
+      "rationale": "Best thematic match for the traveler’s onsen preference among the Akasaka options because the official listing is Super Hotel Premier Akasaka Akane-no-Yu. It remains a practical Akasaka base for food and transit, though the search result did not expose a clear walk-time snippet comparable to the other two hotels. ([superhotel.co.jp](https://www.superhotel.co.jp/s_hotels/akasaka/?sa=X&ved=2ahUKEwjfg8ib9_OFAxWMK_kAHQ7VD70QyK4DegUIAxCJAQ&utm_source=openai))",
       "tradeoffs": [
-        "Well above the mid-range budget for this trip.",
-        "Premium amenities are nice-to-have, not required by the stated preferences."
+        "Gives up the best pick’s clearly verified 2-minute station walk.",
+        "Official search result did not provide enough room, walk-time, or live-price detail to rank it first.",
+        "Likely more functional than boutique in room design."
       ]
     }
   ],
-  "selected_hotel_id": "hotel_royal_park_shiodome"
+  "selected_hotel_id": "hotel_risveglio_akasaka",
+  "payment_context": null
 }

@@ -94,10 +94,10 @@ class HotelBaseContractTests(unittest.TestCase):
             hotel for hotel in result.hotel_candidates if hotel.id == result.selected_hotel_id
         )
 
-        self.assertEqual(selected_hotel.id, "hotel_royal_park_shiodome")
-        self.assertEqual(selected_hotel.name, "The Royal Park Hotel Iconic Tokyo Shiodome")
-        self.assertEqual(selected_hotel.lat, 35.6655)
-        self.assertEqual(selected_hotel.lng, 139.7585)
+        self.assertEqual(selected_hotel.id, "hotel_risveglio_akasaka")
+        self.assertEqual(selected_hotel.name, "Hotel Risveglio Akasaka")
+        self.assertEqual(selected_hotel.lat, 35.6768)
+        self.assertEqual(selected_hotel.lng, 139.7366)
         self.assertEqual(result.payment_context, None)
 
     def test_prompt_includes_places_and_hotel_preferences(self):

@@ -4,34 +4,34 @@
       "name": "Tokyo Dream Park",
       "category": "attraction",
       "city_or_region_guess": "Tokyo",
-      "lat": 35.62934,
-      "lng": 139.78778,
-      "formatted_address": "3-chōme-3-8 Ariake, Koto City, Tokyo 135-0063, Japan",
+      "lat": 35.6293567,
+      "lng": 139.7878091,
+      "formatted_address": "3-3-8 Ariake, Koto-ku, Tokyo, Japan",
       "confidence": 0.95,
       "evidence_caption_quote": "📍Tokyo Dream Park",
-      "source_url": "https://mapcarta.com/W671323718"
+      "source_url": "https://en.japantravel.com/tokyo/100-doraemon-and-friends-in-tokyo/72494"
     },
     {
       "name": "Grand Hyatt Tokyo",
       "category": "hotel",
       "city_or_region_guess": "Tokyo",
-      "lat": 35.659426,
-      "lng": 139.729104,
-      "formatted_address": "6 Chome-10-3 Roppongi, Minato-ku, Tokyo 106-0032, Japan",
+      "lat": 35.6598,
+      "lng": 139.72837,
+      "formatted_address": "6-10-3 Roppongi, Minato-ku, Tokyo 106-0032, Japan",
       "confidence": 0.95,
-      "evidence_caption_quote": "Grand Hyatt Tokyo -  グランド ハイアット 東京",
-      "source_url": "https://www.coordinatesfinder.com/coordinates/128632-grand-hyatt-tokyo"
+      "evidence_caption_quote": "Grand Hyatt Tokyo",
+      "source_url": "https://mapcarta.com/36453644"
     },
     {
       "name": "Akasaka Station",
       "category": "transport",
       "city_or_region_guess": "Tokyo",
-      "lat": 35.6724,
-      "lng": 139.7365,
+      "lat": 35.6722117,
+      "lng": 139.73638,
       "formatted_address": "5 Chome-4-5 Akasaka, Minato City, Tokyo 107-0052, Japan",
-      "confidence": 0.65,
-      "evidence_caption_quote": "HARRY POTTER TRAIN STATION IN TOKYO!",
-      "source_url": "https://latitude.to/map/jp/japan/regions/saitama-prefecture/cities/tokorozawa/articles/127100/akasaka-station-tokyo"
+      "confidence": 0.6,
+      "evidence_caption_quote": "HARRY POTTER TRAIN STATION IN TOKYO",
+      "source_url": "https://www.google.com/maps/search/?api=1&query=35.6722117%2C139.73638&query_place_id=ChIJ78UX0ICLGGARMWT7We_is8A"
     },
     {
       "name": "Harry Potter Cafe",
@@ -39,7 +39,7 @@
       "city_or_region_guess": "Tokyo",
       "lat": 35.6735692,
       "lng": 139.7367042,
-      "formatted_address": "1F Akasaka Biz Tower, 5-3-1 Akasaka, Minato-ku, Tokyo 107-6301, Japan",
+      "formatted_address": "Akasaka Biz Tower 1F, 5-3-1 Akasaka, Minato-ku, Tokyo 107-6301, Japan",
       "confidence": 0.7,
       "evidence_caption_quote": "Harry Potter Cafe",
       "source_url": "https://www.google.com/maps/search/?api=1&query=35.6735692%2C139.7367042&query_place_id=ChIJfcZSIr2LGGARipgY30fWYMY"
@@ -50,7 +50,7 @@
       "city_or_region_guess": "Tokyo",
       "lat": 35.70077,
       "lng": 139.77174,
-      "formatted_address": "1F Don Quijote Akihabara, 4-3-3 Sotokanda, Chiyoda-ku, Tokyo 101-0021, Japan",
+      "formatted_address": "Don Quijote Akihabara 1F, 4-3-3 Sotokanda, Chiyoda-ku, Tokyo 101-0021, Japan",
       "confidence": 0.65,
       "evidence_caption_quote": "Sando Lab Tokyo",
       "source_url": "https://mapcarta.com/N6418727517"
@@ -67,23 +67,23 @@
       "source_url": "https://mapcarta.com/N5190889873"
     },
     {
-      "name": "Chermside Sandwich Harajuku Takeshita Dori",
+      "name": "Chermside Sandwich",
       "category": "restaurant",
       "city_or_region_guess": "Tokyo",
       "lat": 35.6708,
       "lng": 139.7058,
-      "formatted_address": "2F, 1-6-8 Jingumae, Shibuya-ku, Tokyo 150-0001, Japan",
-      "confidence": 0.65,
+      "formatted_address": "Iguchi Building 2F, 1-6-8 Jingumae, Shibuya-ku, Tokyo 150-0001, Japan",
+      "confidence": 0.6,
       "evidence_caption_quote": "Chermside Sandwich",
       "source_url": "https://www.mydestina.com/"
     },
     {
-      "name": "Pelican Café",
+      "name": "Pelican Cafe",
       "category": "restaurant",
       "city_or_region_guess": "Tokyo",
       "lat": 35.7069782,
       "lng": 139.7911622,
-      "formatted_address": "1F, 3-9-11 Kotobuki, Taito-ku, Tokyo 111-0042, Japan",
+      "formatted_address": "3-9-11 Kotobuki, Taito-ku, Tokyo 111-0042, Japan",
       "confidence": 0.65,
       "evidence_caption_quote": "Pelican Cafe",
       "source_url": "https://jp.near-place.com/pelican-cafe-3-chome-9-11-kotobuki-taito/de"

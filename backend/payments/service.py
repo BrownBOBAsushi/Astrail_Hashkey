@@ -7,6 +7,7 @@ small service boundary. It does not perform network calls or real settlement.
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import hmac
 import json
@@ -29,6 +30,8 @@ _DEFAULT_NETWORK = "base-sepolia"
 _DEFAULT_X402_NETWORK = "eip155:84532"
 _DEFAULT_ASSET = "USDC"
 _DEFAULT_AGENT_PAYMENT_USD = Decimal("0.01")
+_DEFAULT_MOCK_PRICE_PER_NIGHT_SGD = 200
+_DEFAULT_MOCK_AVAILABLE_ROOMS = 3
 _DEFAULT_PAYER = "0xOrchestratorDemo"
 _DEFAULT_PAYEE = "0xHotelAgentDemo"
 _RECEIPT_NOTE = "Demo-safe mock booking. No real hotel reservation was created."
@@ -225,6 +228,14 @@ def _default_hotel_tool_path() -> Path:
     return Path(__file__).resolve().parents[1] / "data" / "planner_output.json"
 
 
+def _default_hotel_base_path() -> Path:
+    data_dir = Path(__file__).resolve().parents[1] / "data"
+    hotel_base_path = data_dir / "hotel_base_output.json"
+    if hotel_base_path.exists():
+        return hotel_base_path
+    return _default_hotel_tool_path()
+
+
 def load_hotel_tool_dict(path: Optional[str | Path] = None) -> dict[str, Any]:
     hotel_tool_path = Path(path) if path is not None else _default_hotel_tool_path()
     with hotel_tool_path.open(encoding="utf-8") as fh:
@@ -235,7 +246,30 @@ def load_hotel_tool_dict(path: Optional[str | Path] = None) -> dict[str, Any]:
 
 
 def load_hotel_base_dict(path: Optional[str | Path] = None) -> dict[str, Any]:
-    return load_hotel_tool_dict(path)
+    return load_hotel_tool_dict(path or _default_hotel_base_path())
+
+
+def _booking_ready_hotel_tool(hotel_tool: dict[str, Any]) -> dict[str, Any]:
+    """Fill mock-only checkout fields missing from live hotel-base cache results."""
+    ready = copy.deepcopy(hotel_tool)
+    selected_hotel = resolve_selected_hotel(ready)
+    if not selected_hotel.get("city"):
+        selected_hotel["city"] = _tool_destination_city(ready) or "Tokyo"
+    if not selected_hotel.get("budget_tier"):
+        selected_hotel["budget_tier"] = "mid_range"
+    if not isinstance(selected_hotel.get("price_per_night_sgd"), int):
+        selected_hotel["price_per_night_sgd"] = _DEFAULT_MOCK_PRICE_PER_NIGHT_SGD
+    if not isinstance(selected_hotel.get("mock_available_rooms"), int):
+        selected_hotel["mock_available_rooms"] = _DEFAULT_MOCK_AVAILABLE_ROOMS
+    if not selected_hotel.get("room_type"):
+        selected_hotel["room_type"] = "Demo double room"
+    if not selected_hotel.get("cancellation_policy"):
+        selected_hotel["cancellation_policy"] = (
+            "Demo-safe mock booking; no real hotel reservation is created."
+        )
+    if not selected_hotel.get("area"):
+        selected_hotel["area"] = _hotel_area_name(selected_hotel)
+    return ready
 
 
 def resolve_selected_hotel(hotel_tool: dict[str, Any]) -> dict[str, Any]:
@@ -912,7 +946,7 @@ class AgenticHotelPaymentService:
             if isinstance(request, HotelBookingRequest)
             else HotelBookingRequest.model_validate(request)
         )
-        hotel_base = normalized.hotel_base or load_hotel_tool_dict()
+        hotel_base = _booking_ready_hotel_tool(normalized.hotel_base or load_hotel_base_dict())
         mandate = normalized.mandate or build_default_demo_mandate(hotel_base, normalized.trip_id)
         idempotency_key = normalized.idempotency_key
         if not idempotency_key:
